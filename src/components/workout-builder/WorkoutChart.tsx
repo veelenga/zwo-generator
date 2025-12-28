@@ -220,21 +220,28 @@ export function WorkoutChart({
         ))}
       </g>
 
-      {chartSegments.map((segment) => {
-        const isSelected = selectedSegmentId === segment.id;
-        return (
-          <polygon
-            key={segment.id}
-            points={segment.points}
-            fill={segment.color}
-            fillOpacity={isSelected ? 1 : 0.7}
-            stroke={isSelected ? SELECTED_SEGMENT_COLOR : segment.color}
-            strokeWidth={isSelected ? 2 : 1}
-            className="cursor-pointer transition-all duration-300 hover:opacity-100 animate-fade-in"
-            onClick={() => onSegmentClick(segment.id)}
-          />
-        );
-      })}
+      {/* Render all segment fills */}
+      {chartSegments.map((segment) => (
+        <polygon
+          key={segment.id}
+          points={segment.points}
+          fill={segment.color}
+          fillOpacity={selectedSegmentId === segment.id ? 1 : 0.7}
+          className="cursor-pointer transition-opacity duration-200 hover:opacity-100"
+          onClick={() => onSegmentClick(segment.id)}
+        />
+      ))}
+      {/* Render selection border separately on top */}
+      {selectedSegmentId && chartSegments.find((s) => s.id === selectedSegmentId) && (
+        <polygon
+          points={chartSegments.find((s) => s.id === selectedSegmentId)!.points}
+          fill="none"
+          stroke={SELECTED_SEGMENT_COLOR}
+          strokeWidth={2}
+          strokeLinejoin="round"
+          pointerEvents="none"
+        />
+      )}
 
       <line
         x1={CHART_PADDING.left}

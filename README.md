@@ -2,6 +2,8 @@
 
 AI-powered Zwift workout generator. Describe your workout in plain English, edit visually, export to ZWO.
 
+**Live:** https://veelenga.github.io/zwo-generator/
+
 ## Features
 
 - Generate workouts from natural language using OpenAI
