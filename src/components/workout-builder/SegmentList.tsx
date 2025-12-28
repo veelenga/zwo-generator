@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -5,6 +6,8 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
+  type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
@@ -13,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import type { WorkoutSegment } from '../../types/workout';
-import { SegmentCard } from './SegmentCard';
+import { SegmentCard, SegmentCardOverlay } from './SegmentCard';
 
 interface SegmentListProps {
   segments: WorkoutSegment[];
@@ -32,6 +35,8 @@ export function SegmentList({
   onDuplicateSegment,
   onMoveSegment,
 }: SegmentListProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -43,6 +48,10 @@ export function SegmentList({
     })
   );
 
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string);
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
@@ -51,17 +60,27 @@ export function SegmentList({
       const newIndex = segments.findIndex((seg) => seg.id === over.id);
       onMoveSegment(oldIndex, newIndex);
     }
+
+    setActiveId(null);
+  }
+
+  function handleDragCancel() {
+    setActiveId(null);
   }
 
   if (segments.length === 0) {
     return null;
   }
 
+  const activeSegment = activeId ? segments.find((s) => s.id === activeId) : null;
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <SortableContext
         items={segments.map((s) => s.id)}
@@ -80,6 +99,10 @@ export function SegmentList({
           ))}
         </div>
       </SortableContext>
+
+      <DragOverlay dropAnimation={{ duration: 200, easing: 'ease-out' }}>
+        {activeSegment ? <SegmentCardOverlay segment={activeSegment} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }

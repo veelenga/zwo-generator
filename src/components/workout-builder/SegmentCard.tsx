@@ -15,6 +15,10 @@ interface SegmentCardProps {
   onDuplicate: () => void;
 }
 
+interface SegmentCardOverlayProps {
+  segment: WorkoutSegment;
+}
+
 const SEGMENT_TYPE_LABELS: Record<WorkoutSegment['type'], string> = {
   warmup: 'Warm Up',
   cooldown: 'Cool Down',
@@ -73,6 +77,7 @@ export function SegmentCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.4 : 1,
   };
 
   const duration = getSegmentDuration(segment);
@@ -90,7 +95,7 @@ export function SegmentCard({
           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
         }
-        ${isDragging ? 'opacity-50 shadow-lg' : ''}
+        ${isDragging ? 'shadow-lg ring-2 ring-blue-500/50' : ''}
       `}
       onClick={onSelect}
     >
@@ -129,6 +134,54 @@ export function SegmentCard({
               <TrashIcon />
             </button>
           </div>
+        </div>
+
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-gray-500 dark:text-gray-400">
+            {formatDurationShort(duration)}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <span className="font-mono text-gray-700 dark:text-gray-300">
+              {powerText}
+            </span>
+            <span className="text-xs text-gray-400">
+              ({zoneName})
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SegmentCardOverlay({ segment }: SegmentCardOverlayProps) {
+  const { ftp } = useSettingsStore();
+  const duration = getSegmentDuration(segment);
+  const { text: powerText, avgPower } = getSegmentPowerDisplay(segment, ftp);
+  const color = getColorForPower(avgPower);
+  const zoneName = getZoneName(avgPower);
+
+  return (
+    <div
+      className="
+        relative rounded-lg border-2 p-3 cursor-grabbing
+        border-blue-500 bg-white dark:bg-gray-800
+        shadow-2xl ring-2 ring-blue-500
+      "
+    >
+      <div className="absolute left-1 top-1/2 -translate-y-1/2 p-1 text-gray-400">
+        <DragHandleIcon />
+      </div>
+
+      <div className="ml-6">
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
+            {SEGMENT_TYPE_LABELS[segment.type]}
+          </span>
         </div>
 
         <div className="flex items-center gap-3 text-sm">
