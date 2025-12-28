@@ -2,16 +2,13 @@ import OpenAI from 'openai';
 import { v4 as uuidv4 } from 'uuid';
 import type { Workout, WorkoutSegment } from '../types/workout';
 import { SYSTEM_PROMPT, buildGeneratePrompt, buildRefinePrompt } from './prompts';
+import { validateGeneratedWorkout, sanitizePrompt, type ValidatedGeneratedWorkout } from './validation';
 
 const OPENAI_MODEL = 'gpt-4o';
 const OPENAI_TEMPERATURE = 0.7;
 const OPENAI_MAX_TOKENS = 2000;
 
-interface GeneratedWorkout {
-  name: string;
-  description: string;
-  segments: Omit<WorkoutSegment, 'id'>[];
-}
+type GeneratedWorkout = ValidatedGeneratedWorkout;
 
 interface AIResponse {
   workout: Workout;
@@ -46,17 +43,28 @@ function parseAIResponse(content: string): GeneratedWorkout {
     throw new Error('No valid JSON found in response');
   }
 
-  const parsed = JSON.parse(jsonMatch[0]);
-
-  if (!parsed.name || !Array.isArray(parsed.segments)) {
-    throw new Error('Invalid workout structure in response');
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch {
+    throw new Error('Invalid JSON in AI response');
   }
 
-  return parsed as GeneratedWorkout;
+  const validationResult = validateGeneratedWorkout(parsed);
+  if (!validationResult.success) {
+    throw new Error(validationResult.error);
+  }
+
+  return validationResult.data;
 }
 
 export async function generateWorkout(options: GenerateOptions): Promise<AIResponse> {
   const { apiKey, prompt, ftp, existingWorkout } = options;
+
+  const sanitizedPrompt = sanitizePrompt(prompt);
+  if (!sanitizedPrompt) {
+    throw new Error('Prompt cannot be empty');
+  }
 
   const client = new OpenAI({
     apiKey,
@@ -65,7 +73,7 @@ export async function generateWorkout(options: GenerateOptions): Promise<AIRespo
 
   const userPrompt = existingWorkout
     ? buildRefinePrompt(
-        prompt,
+        sanitizedPrompt,
         {
           name: existingWorkout.name,
           description: existingWorkout.description,
@@ -73,7 +81,7 @@ export async function generateWorkout(options: GenerateOptions): Promise<AIRespo
         },
         ftp
       )
-    : buildGeneratePrompt(prompt, ftp);
+    : buildGeneratePrompt(sanitizedPrompt, ftp);
 
   const response = await client.chat.completions.create({
     model: OPENAI_MODEL,

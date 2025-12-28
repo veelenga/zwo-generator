@@ -73,7 +73,7 @@ function SettingsForm({ initialApiKey, initialFtp, onSave, onCancel }: SettingsF
           placeholder="sk-..."
         />
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Required for AI workout generation. Stored locally in your browser.{' '}
+          Required for AI workout generation.{' '}
           <a
             href="https://platform.openai.com/api-keys"
             target="_blank"
@@ -83,6 +83,21 @@ function SettingsForm({ initialApiKey, initialFtp, onSave, onCancel }: SettingsF
             Get one from OpenAI
           </a>
         </p>
+        <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <p className="text-xs text-amber-800 dark:text-amber-200">
+            <strong>Security note:</strong> Your API key is stored in your browser's local storage (unencrypted).
+            We recommend{' '}
+            <a
+              href="https://platform.openai.com/settings/organization/limits"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:no-underline"
+            >
+              setting a spending limit
+            </a>
+            {' '}on your OpenAI account. Avoid using this on shared computers.
+          </p>
+        </div>
       </div>
 
       {error && (
