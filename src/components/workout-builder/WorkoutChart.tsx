@@ -1,8 +1,13 @@
 import { useMemo, useCallback } from 'react';
-import type { WorkoutSegment, IntervalsSegment } from '../../types/workout';
+import type { WorkoutSegment } from '../../types/workout';
 import { getSegmentDuration } from '../../utils/workoutUtils';
 import { getColorForPower } from '../../utils/powerZones';
 import { formatDuration, formatPower } from '../../utils/formatters';
+import {
+  getSegmentPath,
+  calculateXAxisTicks,
+  POWER_DISPLAY_RANGE,
+} from '../../utils/chartUtils';
 
 interface WorkoutChartProps {
   segments: WorkoutSegment[];
@@ -13,11 +18,7 @@ interface WorkoutChartProps {
 
 const CHART_PADDING = { top: 20, right: 20, bottom: 40, left: 50 };
 const CHART_WIDTH = 800;
-const MAX_POWER_DISPLAY = 1.5;
-const MIN_POWER_DISPLAY = 0;
 const Y_AXIS_TICKS = [0, 0.5, 0.75, 1.0, 1.25, 1.5];
-const TICK_INTERVAL_SECONDS = 300;
-const MAX_X_AXIS_TICKS = 6;
 const SELECTED_SEGMENT_COLOR = '#1d4ed8';
 const FTP_LINE_POWER = 1;
 
@@ -28,84 +29,6 @@ interface ChartSegment {
   points: string;
   color: string;
   avgPower: number;
-}
-
-function getSegmentPath(
-  segment: WorkoutSegment,
-  x: number,
-  width: number,
-  powerToY: (power: number) => number
-): { points: string; avgPower: number } {
-  const baseline = powerToY(0);
-
-  switch (segment.type) {
-    case 'warmup':
-    case 'ramp': {
-      const startY = powerToY(segment.powerLow);
-      const endY = powerToY(segment.powerHigh);
-      return {
-        points: `${x},${baseline} ${x},${startY} ${x + width},${endY} ${x + width},${baseline}`,
-        avgPower: (segment.powerLow + segment.powerHigh) / 2,
-      };
-    }
-    case 'cooldown': {
-      const startY = powerToY(segment.powerHigh);
-      const endY = powerToY(segment.powerLow);
-      return {
-        points: `${x},${baseline} ${x},${startY} ${x + width},${endY} ${x + width},${baseline}`,
-        avgPower: (segment.powerLow + segment.powerHigh) / 2,
-      };
-    }
-    case 'steadystate': {
-      const y = powerToY(segment.power);
-      return {
-        points: `${x},${baseline} ${x},${y} ${x + width},${y} ${x + width},${baseline}`,
-        avgPower: segment.power,
-      };
-    }
-    case 'intervals': {
-      const intervals = segment as IntervalsSegment;
-      const singleIntervalWidth = width / intervals.repeat;
-      const onRatio = intervals.onDuration / (intervals.onDuration + intervals.offDuration);
-      const onWidth = singleIntervalWidth * onRatio;
-
-      let points = `${x},${baseline}`;
-      let currentX = x;
-
-      for (let i = 0; i < intervals.repeat; i++) {
-        const onY = powerToY(intervals.onPower);
-        const offY = powerToY(intervals.offPower);
-
-        points += ` ${currentX},${onY} ${currentX + onWidth},${onY}`;
-        points += ` ${currentX + onWidth},${offY} ${currentX + singleIntervalWidth},${offY}`;
-        currentX += singleIntervalWidth;
-      }
-
-      points += ` ${x + width},${baseline}`;
-
-      const avgPower =
-        (intervals.onPower * intervals.onDuration + intervals.offPower * intervals.offDuration) /
-        (intervals.onDuration + intervals.offDuration);
-
-      return { points, avgPower };
-    }
-    case 'freeride': {
-      const y = powerToY(0.5);
-      return {
-        points: `${x},${baseline} ${x},${y} ${x + width},${y} ${x + width},${baseline}`,
-        avgPower: 0.5,
-      };
-    }
-    case 'maxeffort': {
-      const y = powerToY(1.5);
-      return {
-        points: `${x},${baseline} ${x},${y} ${x + width},${y} ${x + width},${baseline}`,
-        avgPower: 1.5,
-      };
-    }
-    default:
-      return { points: '', avgPower: 0 };
-  }
 }
 
 export function WorkoutChart({
@@ -123,7 +46,7 @@ export function WorkoutChart({
   );
 
   const powerToY = useCallback((power: number) => {
-    const normalized = (power - MIN_POWER_DISPLAY) / (MAX_POWER_DISPLAY - MIN_POWER_DISPLAY);
+    const normalized = (power - POWER_DISPLAY_RANGE.min) / (POWER_DISPLAY_RANGE.max - POWER_DISPLAY_RANGE.min);
     return CHART_PADDING.top + innerHeight * (1 - normalized);
   }, [innerHeight]);
 
@@ -151,12 +74,10 @@ export function WorkoutChart({
     });
   }, [segments, totalDuration, innerWidth, powerToY]);
 
-  const xAxisTicks = useMemo(() => {
-    if (totalDuration === 0) return [];
-    const tickCount = Math.min(MAX_X_AXIS_TICKS, Math.floor(totalDuration / TICK_INTERVAL_SECONDS));
-    const interval = totalDuration / tickCount;
-    return Array.from({ length: tickCount + 1 }, (_, i) => Math.round(i * interval));
-  }, [totalDuration]);
+  const xAxisTicks = useMemo(
+    () => calculateXAxisTicks(totalDuration),
+    [totalDuration]
+  );
 
   if (segments.length === 0) {
     return (

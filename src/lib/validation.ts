@@ -119,12 +119,36 @@ export type ValidationResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
 
+// Normalize segments to ensure powerLow < powerHigh
+function normalizeSegments(
+  segments: ValidatedGeneratedWorkout['segments']
+): ValidatedGeneratedWorkout['segments'] {
+  return segments.map((segment) => {
+    if ('powerLow' in segment && 'powerHigh' in segment) {
+      if (segment.powerLow > segment.powerHigh) {
+        return {
+          ...segment,
+          powerLow: segment.powerHigh,
+          powerHigh: segment.powerLow,
+        };
+      }
+    }
+    return segment;
+  });
+}
+
 // Validate AI response
 export function validateGeneratedWorkout(data: unknown): ValidationResult<ValidatedGeneratedWorkout> {
   const result = generatedWorkoutSchema.safeParse(data);
 
   if (result.success) {
-    return { success: true, data: result.data };
+    return {
+      success: true,
+      data: {
+        ...result.data,
+        segments: normalizeSegments(result.data.segments),
+      },
+    };
   }
 
   const errorMessages = result.error.issues

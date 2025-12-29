@@ -13,13 +13,15 @@ export function Header() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(workout.name);
 
+  const hasSegments = workout.segments.length > 0;
+
   const handleNameSave = () => {
     updateWorkout({ name: tempName || 'New Workout' });
     setIsEditingName(false);
   };
 
   const handleExport = () => {
-    if (workout.segments.length === 0) return;
+    if (!hasSegments) return;
     downloadZwoFile(workout);
   };
 
@@ -34,57 +36,63 @@ export function Header() {
             </span>
           </div>
 
-          <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block" />
+          {hasSegments && (
+            <>
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block" />
 
-          {isEditingName ? (
-            <input
-              type="text"
-              value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
-              onBlur={handleNameSave}
-              onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
-              className="
-                px-2 py-1 rounded border border-blue-500
-                bg-white dark:bg-gray-700
-                text-gray-900 dark:text-gray-100
-                focus:outline-none focus:ring-2 focus:ring-blue-500
-                text-sm
-              "
-              autoFocus
-            />
-          ) : (
-            <button
-              onClick={() => {
-                setTempName(workout.name);
-                setIsEditingName(true);
-              }}
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white truncate max-w-[200px]"
-              title="Click to rename"
-            >
-              {workout.name || 'Untitled Workout'}
-            </button>
+              {isEditingName ? (
+                <input
+                  type="text"
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  onBlur={handleNameSave}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
+                  className="
+                    px-2 py-1 rounded border border-blue-500
+                    bg-white dark:bg-gray-700
+                    text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                    text-sm
+                  "
+                  autoFocus
+                />
+              ) : (
+                <button
+                  onClick={() => {
+                    setTempName(workout.name);
+                    setIsEditingName(true);
+                  }}
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white truncate max-w-[200px]"
+                  title="Click to rename"
+                >
+                  {workout.name || 'Untitled Workout'}
+                </button>
+              )}
+            </>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 mr-2">
-            <button
-              onClick={undo}
-              disabled={!canUndo}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Undo (Cmd+Z)"
-            >
-              <UndoIcon />
-            </button>
-            <button
-              onClick={redo}
-              disabled={!canRedo}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Redo (Cmd+Shift+Z)"
-            >
-              <RedoIcon />
-            </button>
-          </div>
+          {hasSegments && (
+            <div className="flex items-center gap-1 mr-2">
+              <button
+                onClick={undo}
+                disabled={!canUndo}
+                className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Undo (Cmd+Z)"
+              >
+                <UndoIcon />
+              </button>
+              <button
+                onClick={redo}
+                disabled={!canRedo}
+                className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Redo (Cmd+Shift+Z)"
+              >
+                <RedoIcon />
+              </button>
+            </div>
+          )}
 
           <Button
             variant="ghost"
@@ -111,7 +119,7 @@ export function Header() {
           <Button
             size="sm"
             onClick={handleExport}
-            disabled={workout.segments.length === 0}
+            disabled={!hasSegments}
           >
             <DownloadIcon />
             <span className="hidden sm:inline ml-1">Export</span>
