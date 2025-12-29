@@ -6,22 +6,25 @@ interface PromptInputProps {
   onSubmit: (prompt: string) => void;
   isLoading: boolean;
   placeholder?: string;
-  submitLabel?: string;
 }
+
+const SINGLE_LINE_HEIGHT_THRESHOLD = 60;
 
 export function PromptInput({
   onSubmit,
   isLoading,
   placeholder = 'Describe your workout...',
-  submitLabel = 'Generate',
 }: PromptInputProps) {
   const [value, setValue] = useState('');
+  const [isMultiline, setIsMultiline] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      const scrollHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = `${scrollHeight}px`;
+      setIsMultiline(scrollHeight > SINGLE_LINE_HEIGHT_THRESHOLD);
     }
   }, [value]);
 
@@ -44,44 +47,52 @@ export function PromptInput({
   };
 
   return (
-    <div className="relative">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        disabled={isLoading}
-        rows={1}
-        className="
-          w-full px-4 py-3 pr-24 rounded-xl border
-          bg-white dark:bg-gray-800
-          text-gray-900 dark:text-gray-100
-          border-gray-300 dark:border-gray-600
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-          placeholder-gray-400 dark:placeholder-gray-500
-          disabled:opacity-50 disabled:cursor-not-allowed
-          resize-none overflow-hidden
-          min-h-[48px] max-h-[200px]
-        "
-      />
-      <button
-        onClick={handleSubmit}
-        disabled={!value.trim() || isLoading || isOverLimit}
-        className="
-          absolute right-2 top-1/2 -translate-y-1/2
-          px-4 py-1.5 rounded-lg
-          bg-blue-600 text-white text-sm font-medium
-          hover:bg-blue-700
-          disabled:opacity-50 disabled:cursor-not-allowed
-          transition-colors
-        "
-      >
-        {isLoading ? <SpinnerIcon className="h-4 w-4" /> : submitLabel}
-      </button>
+    <div className="space-y-1">
+      <div className={`flex gap-2 rounded-xl border bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent ${isMultiline ? 'items-start' : 'items-center'}`}>
+        <textarea
+          ref={textareaRef}
+          id="workout-prompt"
+          name="workout-prompt"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={isLoading}
+          rows={1}
+          className="
+            flex-1 px-3 sm:px-4 py-3 bg-transparent
+            text-gray-900 dark:text-gray-100
+            placeholder-gray-400 dark:placeholder-gray-500
+            disabled:opacity-50 disabled:cursor-not-allowed
+            resize-none overflow-hidden
+            max-h-[200px]
+            text-sm sm:text-base
+            focus:outline-none
+          "
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={!value.trim() || isLoading || isOverLimit}
+          className={`
+            p-2 m-2 rounded-lg shrink-0
+            bg-blue-600 text-white
+            hover:bg-blue-700
+            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-colors
+          `}
+        >
+          {isLoading ? (
+            <SpinnerIcon className="h-5 w-5" />
+          ) : (
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          )}
+        </button>
+      </div>
       {charCount > 0 && (
         <div
-          className={`absolute right-2 -bottom-5 text-xs ${
+          className={`text-right text-xs ${
             isOverLimit ? 'text-red-500' : 'text-gray-400'
           }`}
         >

@@ -23,7 +23,6 @@ export function AiPanel() {
             onSubmit={refine}
             isLoading={isLoading}
             placeholder="e.g., Make the intervals harder, add more recovery..."
-            submitLabel="Refine"
           />
         )}
 

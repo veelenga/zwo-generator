@@ -11,10 +11,13 @@ import { AiPanel } from '../ai/AiPanel';
 import type { WorkoutSegment } from '../../types/workout';
 
 interface WorkoutBuilderProps {
-  onExampleClick: (prompt: string) => void;
+  onGenerate: (prompt: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  onClearError: () => void;
 }
 
-export function WorkoutBuilder({ onExampleClick }: WorkoutBuilderProps) {
+export function WorkoutBuilder({ onGenerate, isLoading, error, onClearError }: WorkoutBuilderProps) {
   const {
     workout,
     selectedSegmentId,
@@ -46,6 +49,17 @@ export function WorkoutBuilder({ onExampleClick }: WorkoutBuilderProps) {
     }
   };
 
+  if (workout.segments.length === 0) {
+    return (
+      <EmptyState
+        onGenerate={onGenerate}
+        isLoading={isLoading}
+        error={error}
+        onClearError={onClearError}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Workout Chart */}
@@ -58,82 +72,76 @@ export function WorkoutBuilder({ onExampleClick }: WorkoutBuilderProps) {
         />
 
         {/* Stats bar */}
-        {workout.segments.length > 0 && (
-          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center gap-6 text-sm">
-            <div>
-              <span className="text-gray-500 dark:text-gray-400">Duration: </span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {formatDurationShort(totalDuration)}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-500 dark:text-gray-400">TSS: </span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                ~{estimatedTss}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-500 dark:text-gray-400">Segments: </span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {workout.segments.length}
-              </span>
-            </div>
+        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+          <div>
+            <span className="text-gray-500 dark:text-gray-400">Duration: </span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {formatDurationShort(totalDuration)}
+            </span>
           </div>
-        )}
+          <div>
+            <span className="text-gray-500 dark:text-gray-400">TSS: </span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              ~{estimatedTss}
+            </span>
+          </div>
+          <div>
+            <span className="text-gray-500 dark:text-gray-400">Segments: </span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {workout.segments.length}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Empty state or builder content */}
-      {workout.segments.length === 0 ? (
-        <EmptyState onExampleClick={onExampleClick} />
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Segment List */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-gray-900 dark:text-gray-100">
-              Segments
-            </h3>
-            <SegmentList
-              segments={workout.segments}
-              selectedSegmentId={selectedSegmentId}
-              onSelectSegment={handleSelectSegment}
-              onDeleteSegment={removeSegment}
-              onDuplicateSegment={duplicateSegmentById}
-              onMoveSegment={moveSegment}
-            />
-            <AddSegmentButton onAddSegment={handleAddSegment} />
-          </div>
+      {/* Builder content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Segment List */}
+        <div className="space-y-4">
+          <h3 className="font-medium text-gray-900 dark:text-gray-100">
+            Segments
+          </h3>
+          <SegmentList
+            segments={workout.segments}
+            selectedSegmentId={selectedSegmentId}
+            onSelectSegment={handleSelectSegment}
+            onDeleteSegment={removeSegment}
+            onDuplicateSegment={duplicateSegmentById}
+            onMoveSegment={moveSegment}
+          />
+          <AddSegmentButton onAddSegment={handleAddSegment} />
+        </div>
 
-          {/* Segment Editor / AI Panel */}
-          <div className="space-y-4">
-            {selectedSegment ? (
-              <>
-                <h3 className="font-medium text-gray-900 dark:text-gray-100">
-                  Edit Segment
-                </h3>
-                <SegmentEditor
-                  key={selectedSegment.id}
-                  segment={selectedSegment}
-                  onUpdate={handleUpdateSegment}
-                  onClose={() => selectSegment(null)}
-                />
-                <div className="mt-4">
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-                    Refine with AI
-                  </h3>
-                  <AiPanel />
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className="font-medium text-gray-900 dark:text-gray-100">
+        {/* Segment Editor / AI Panel */}
+        <div className="space-y-4">
+          {selectedSegment ? (
+            <>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                Edit Segment
+              </h3>
+              <SegmentEditor
+                key={selectedSegment.id}
+                segment={selectedSegment}
+                onUpdate={handleUpdateSegment}
+                onClose={() => selectSegment(null)}
+              />
+              <div className="mt-4">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
                   Refine with AI
                 </h3>
                 <AiPanel />
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                Refine with AI
+              </h3>
+              <AiPanel />
+            </>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

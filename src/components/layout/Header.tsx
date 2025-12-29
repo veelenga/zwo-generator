@@ -27,10 +27,10 @@ export function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <LightningIcon className="w-8 h-8 text-orange-500" />
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <LightningIcon className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500" />
             <span className="font-bold text-lg text-gray-900 dark:text-white hidden sm:inline">
               ZWO Generator
             </span>
@@ -62,7 +62,7 @@ export function Header() {
                     setTempName(workout.name);
                     setIsEditingName(true);
                   }}
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white truncate max-w-[200px]"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white truncate max-w-[120px] sm:max-w-[200px]"
                   title="Click to rename"
                 >
                   {workout.name || 'Untitled Workout'}
@@ -72,13 +72,13 @@ export function Header() {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {hasSegments && (
-            <div className="flex items-center gap-1 mr-2">
+            <div className="flex items-center gap-0.5 sm:gap-1 mr-1 sm:mr-2">
               <button
                 onClick={undo}
                 disabled={!canUndo}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Undo (Cmd+Z)"
               >
                 <UndoIcon />
@@ -86,7 +86,7 @@ export function Header() {
               <button
                 onClick={redo}
                 disabled={!canRedo}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Redo (Cmd+Shift+Z)"
               >
                 <RedoIcon />

@@ -136,19 +136,19 @@ export function SegmentCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
           <span className="text-gray-500 dark:text-gray-400">
             {formatDurationShort(duration)}
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className="w-2.5 h-2.5 rounded-full"
+              className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: color }}
             />
-            <span className="font-mono text-gray-700 dark:text-gray-300">
+            <span className="font-mono text-gray-700 dark:text-gray-300 truncate">
               {powerText}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400 hidden sm:inline">
               ({zoneName})
             </span>
           </div>
@@ -184,19 +184,19 @@ export function SegmentCardOverlay({ segment }: SegmentCardOverlayProps) {
           </span>
         </div>
 
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
           <span className="text-gray-500 dark:text-gray-400">
             {formatDurationShort(duration)}
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className="w-2.5 h-2.5 rounded-full"
+              className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: color }}
             />
-            <span className="font-mono text-gray-700 dark:text-gray-300">
+            <span className="font-mono text-gray-700 dark:text-gray-300 truncate">
               {powerText}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400 hidden sm:inline">
               ({zoneName})
             </span>
           </div>

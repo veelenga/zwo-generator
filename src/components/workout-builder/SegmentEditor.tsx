@@ -142,7 +142,7 @@ export function SegmentEditor({ segment, onUpdate, onClose }: SegmentEditorProps
               value={segment.repeat}
               onChange={(e) => onUpdate({ repeat: Number(e.target.value) })}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Slider
                 label="On Duration"
                 min={MIN_DURATION_SECONDS}
@@ -162,7 +162,7 @@ export function SegmentEditor({ segment, onUpdate, onClose }: SegmentEditorProps
                 formatValue={(v) => formatDurationShort(v)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Slider
                 label="On Power"
                 min={MIN_POWER}
