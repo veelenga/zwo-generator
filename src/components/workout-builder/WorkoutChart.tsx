@@ -155,7 +155,7 @@ export function WorkoutChart({
     if (totalDuration === 0) return [];
     const tickCount = Math.min(MAX_X_AXIS_TICKS, Math.floor(totalDuration / TICK_INTERVAL_SECONDS));
     const interval = totalDuration / tickCount;
-    return Array.from({ length: tickCount + 1 }, (_, i) => i * interval);
+    return Array.from({ length: tickCount + 1 }, (_, i) => Math.round(i * interval));
   }, [totalDuration]);
 
   if (segments.length === 0) {
