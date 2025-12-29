@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { WorkoutChart } from './WorkoutChart';
 import type { WorkoutSegment } from '../../types/workout';
+import { useSettingsStore } from '../../store/settingsStore';
 
 describe('WorkoutChart', () => {
   const mockOnSegmentClick = vi.fn();
@@ -231,6 +232,146 @@ describe('WorkoutChart', () => {
 
       const polygon = container.querySelector('polygon');
       expect(polygon).toBeInTheDocument();
+    });
+  });
+
+  describe('tooltips', () => {
+    beforeEach(() => {
+      useSettingsStore.setState({ ftp: 200 });
+      // Mock matchMedia to simulate hover-capable device
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation((query: string) => ({
+          matches: query === '(hover: hover)',
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      });
+    });
+
+    it('shows tooltip on mouse move over segment', () => {
+      const { container } = render(
+        <WorkoutChart
+          segments={sampleSegments}
+          selectedSegmentId={null}
+          onSegmentClick={mockOnSegmentClick}
+        />
+      );
+
+      const polygon = container.querySelector('polygon');
+      fireEvent.mouseMove(polygon!, { clientX: 100, clientY: 100 });
+
+      expect(screen.getByText(/Warm Up/)).toBeInTheDocument();
+    });
+
+    it('hides tooltip on mouse leave', () => {
+      const { container } = render(
+        <WorkoutChart
+          segments={sampleSegments}
+          selectedSegmentId={null}
+          onSegmentClick={mockOnSegmentClick}
+        />
+      );
+
+      const polygon = container.querySelector('polygon');
+      fireEvent.mouseMove(polygon!, { clientX: 100, clientY: 100 });
+      expect(screen.getByText(/Warm Up/)).toBeInTheDocument();
+
+      fireEvent.mouseLeave(polygon!);
+      expect(screen.queryByText(/Warm Up/)).not.toBeInTheDocument();
+    });
+
+    it('shows tooltip with watts for steady state segment', () => {
+      const { container } = render(
+        <WorkoutChart
+          segments={[{ id: '1', type: 'steadystate', duration: 300, power: 0.75 }]}
+          selectedSegmentId={null}
+          onSegmentClick={mockOnSegmentClick}
+        />
+      );
+
+      const polygon = container.querySelector('polygon');
+      fireEvent.mouseMove(polygon!, { clientX: 100, clientY: 100 });
+
+      expect(screen.getByText(/Steady State/)).toBeInTheDocument();
+      expect(screen.getByText(/75%.*150W/)).toBeInTheDocument();
+    });
+
+    it('shows tooltip with interval details', () => {
+      const { container } = render(
+        <WorkoutChart
+          segments={[{
+            id: '1',
+            type: 'intervals',
+            repeat: 5,
+            onDuration: 60,
+            offDuration: 60,
+            onPower: 1.2,
+            offPower: 0.5,
+          }]}
+          selectedSegmentId={null}
+          onSegmentClick={mockOnSegmentClick}
+        />
+      );
+
+      const polygon = container.querySelector('polygon');
+      fireEvent.mouseMove(polygon!, { clientX: 100, clientY: 100 });
+
+      expect(screen.getByText(/Intervals/)).toBeInTheDocument();
+      expect(screen.getByText(/5 reps/)).toBeInTheDocument();
+    });
+
+    it('shows tooltip with ramp power range', () => {
+      const { container } = render(
+        <WorkoutChart
+          segments={[{ id: '1', type: 'ramp', duration: 300, powerLow: 0.5, powerHigh: 1.0 }]}
+          selectedSegmentId={null}
+          onSegmentClick={mockOnSegmentClick}
+        />
+      );
+
+      const polygon = container.querySelector('polygon');
+      fireEvent.mouseMove(polygon!, { clientX: 100, clientY: 100 });
+
+      expect(screen.getByText(/Ramp/)).toBeInTheDocument();
+      expect(screen.getByText(/50%.*→.*100%/)).toBeInTheDocument();
+    });
+
+    it('shows freeride tooltip', () => {
+      const { container } = render(
+        <WorkoutChart
+          segments={[{ id: '1', type: 'freeride', duration: 600 }]}
+          selectedSegmentId={null}
+          onSegmentClick={mockOnSegmentClick}
+        />
+      );
+
+      const polygon = container.querySelector('polygon');
+      fireEvent.mouseMove(polygon!, { clientX: 100, clientY: 100 });
+
+      expect(screen.getByText(/Free Ride/)).toBeInTheDocument();
+      expect(screen.getByText(/Ride at your own pace/)).toBeInTheDocument();
+    });
+
+    it('shows max effort tooltip', () => {
+      const { container } = render(
+        <WorkoutChart
+          segments={[{ id: '1', type: 'maxeffort', duration: 30 }]}
+          selectedSegmentId={null}
+          onSegmentClick={mockOnSegmentClick}
+        />
+      );
+
+      const polygon = container.querySelector('polygon');
+      fireEvent.mouseMove(polygon!, { clientX: 100, clientY: 100 });
+
+      expect(screen.getByText(/Max Effort/)).toBeInTheDocument();
+      expect(screen.getByText(/All out effort!/)).toBeInTheDocument();
     });
   });
 });

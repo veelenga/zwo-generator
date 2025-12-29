@@ -1,13 +1,24 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useRef, useEffect } from 'react';
 import type { WorkoutSegment } from '../../types/workout';
 import { getSegmentDuration } from '../../utils/workoutUtils';
 import { getColorForPower } from '../../utils/powerZones';
-import { formatDuration, formatPower } from '../../utils/formatters';
+import { formatDuration, formatPower, formatDurationShort } from '../../utils/formatters';
 import {
   getSegmentPath,
   calculateXAxisTicks,
   POWER_DISPLAY_RANGE,
 } from '../../utils/chartUtils';
+import { useSettingsStore } from '../../store/settingsStore';
+
+const SEGMENT_TYPE_LABELS: Record<WorkoutSegment['type'], string> = {
+  warmup: 'Warm Up',
+  cooldown: 'Cool Down',
+  steadystate: 'Steady State',
+  intervals: 'Intervals',
+  ramp: 'Ramp',
+  freeride: 'Free Ride',
+  maxeffort: 'Max Effort',
+};
 
 interface WorkoutChartProps {
   segments: WorkoutSegment[];
@@ -29,6 +40,15 @@ interface ChartSegment {
   points: string;
   color: string;
   avgPower: number;
+  tooltip: string;
+}
+
+interface TooltipState {
+  visible: boolean;
+  x: number;
+  y: number;
+  content: string;
+  containerWidth: number;
 }
 
 export function WorkoutChart({
@@ -37,6 +57,20 @@ export function WorkoutChart({
   onSegmentClick,
   height = 200,
 }: WorkoutChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, content: '', containerWidth: 0 });
+  const [canHover, setCanHover] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches
+  );
+  const { ftp } = useSettingsStore();
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(hover: hover)');
+    const handler = (e: MediaQueryListEvent) => setCanHover(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
   const innerWidth = CHART_WIDTH - CHART_PADDING.left - CHART_PADDING.right;
   const innerHeight = height - CHART_PADDING.top - CHART_PADDING.bottom;
 
@@ -50,6 +84,38 @@ export function WorkoutChart({
     return CHART_PADDING.top + innerHeight * (1 - normalized);
   }, [innerHeight]);
 
+  const formatPowerWithWatts = useCallback((power: number): string => {
+    const watts = Math.round(power * ftp);
+    return `${formatPower(power)} (${watts}W)`;
+  }, [ftp]);
+
+  const getSegmentTooltip = useCallback((segment: WorkoutSegment, duration: number, avgPower: number): string => {
+    const type = SEGMENT_TYPE_LABELS[segment.type];
+    const durationStr = formatDurationShort(duration);
+
+    if (segment.type === 'intervals') {
+      const onPower = formatPowerWithWatts(segment.onPower);
+      const offPower = formatPowerWithWatts(segment.offPower);
+      return `${type} · ${durationStr}\n${segment.repeat} reps at ${onPower}\nRest at ${offPower}`;
+    }
+
+    if (segment.type === 'ramp' || segment.type === 'warmup' || segment.type === 'cooldown') {
+      const startPower = formatPowerWithWatts(segment.powerLow);
+      const endPower = formatPowerWithWatts(segment.powerHigh);
+      return `${type} · ${durationStr}\n${startPower} → ${endPower}`;
+    }
+
+    if (segment.type === 'freeride') {
+      return `${type} · ${durationStr}\nRide at your own pace`;
+    }
+
+    if (segment.type === 'maxeffort') {
+      return `${type} · ${durationStr}\nAll out effort!`;
+    }
+
+    return `${type} · ${durationStr}\n${formatPowerWithWatts(avgPower)}`;
+  }, [formatPowerWithWatts]);
+
   const chartSegments = useMemo<ChartSegment[]>(() => {
     if (totalDuration === 0) return [];
 
@@ -59,6 +125,7 @@ export function WorkoutChart({
       const width = (duration / totalDuration) * innerWidth;
       const { points, avgPower } = getSegmentPath(segment, currentX, width, powerToY);
       const color = getColorForPower(avgPower);
+      const tooltip = getSegmentTooltip(segment, duration, avgPower);
 
       const result = {
         id: segment.id,
@@ -67,17 +134,34 @@ export function WorkoutChart({
         points,
         color,
         avgPower,
+        tooltip,
       };
 
       currentX += width;
       return result;
     });
-  }, [segments, totalDuration, innerWidth, powerToY]);
+  }, [segments, totalDuration, innerWidth, powerToY, getSegmentTooltip]);
 
   const xAxisTicks = useMemo(
     () => calculateXAxisTicks(totalDuration),
     [totalDuration]
   );
+
+  const handleMouseMove = useCallback((e: React.MouseEvent, content: string) => {
+    if (!canHover || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setTooltip({
+      visible: true,
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+      content,
+      containerWidth: rect.width,
+    });
+  }, [canHover]);
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltip(prev => ({ ...prev, visible: false }));
+  }, []);
 
   if (segments.length === 0) {
     return (
@@ -93,11 +177,12 @@ export function WorkoutChart({
   }
 
   return (
-    <svg
-      viewBox={`0 0 ${CHART_WIDTH} ${height}`}
-      className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl"
-      preserveAspectRatio="xMidYMid meet"
-    >
+    <div ref={containerRef} className="relative">
+      <svg
+        viewBox={`0 0 ${CHART_WIDTH} ${height}`}
+        className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl"
+        preserveAspectRatio="xMidYMid meet"
+      >
       <g className="text-gray-300 dark:text-gray-600">
         {Y_AXIS_TICKS.map((tick) => (
           <line
@@ -150,6 +235,8 @@ export function WorkoutChart({
           fillOpacity={selectedSegmentId === segment.id ? 1 : 0.7}
           className="cursor-pointer transition-opacity duration-200 hover:opacity-100"
           onClick={() => onSegmentClick(segment.id)}
+          onMouseMove={(e) => handleMouseMove(e, segment.tooltip)}
+          onMouseLeave={handleMouseLeave}
         />
       ))}
       {/* Render selection border separately on top */}
@@ -174,5 +261,24 @@ export function WorkoutChart({
         className="text-gray-400 dark:text-gray-500"
       />
     </svg>
+
+    {/* Tooltip */}
+    {tooltip.visible && (() => {
+      const showOnLeft = tooltip.x > tooltip.containerWidth - 150;
+      return (
+        <div
+          className="absolute pointer-events-none z-10 px-2 py-1 text-xs bg-gray-900 dark:bg-gray-700 text-white rounded shadow-lg whitespace-pre-line w-max"
+          style={{
+            left: showOnLeft ? undefined : tooltip.x + 10,
+            right: showOnLeft ? tooltip.containerWidth - tooltip.x + 10 : undefined,
+            top: tooltip.y - 10,
+            transform: 'translateY(-100%)',
+          }}
+        >
+          {tooltip.content}
+        </div>
+      );
+    })()}
+  </div>
   );
 }
