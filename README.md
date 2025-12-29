@@ -1,8 +1,6 @@
 # ZWO Generator
 
-AI-powered Zwift workout generator. Describe your workout in plain English, edit visually, export to ZWO.
-
-**Live:** https://veelenga.github.io/zwo-generator/
+Generative Zwift Workouts. Describe your workout in plain English, edit visually, export to ZWO.
 
 ![ZWO Generator](demo/zwo-generator.png)
 
