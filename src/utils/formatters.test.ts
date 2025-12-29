@@ -37,8 +37,18 @@ describe('formatDuration', () => {
 })
 
 describe('formatDurationShort', () => {
+  it('formats seconds only', () => {
+    expect(formatDurationShort(30)).toBe('30s')
+    expect(formatDurationShort(45)).toBe('45s')
+  })
+
   it('formats minutes only', () => {
     expect(formatDurationShort(300)).toBe('5m')
+  })
+
+  it('formats minutes and seconds', () => {
+    expect(formatDurationShort(90)).toBe('1m 30s')
+    expect(formatDurationShort(125)).toBe('2m 5s')
   })
 
   it('formats hours only', () => {
@@ -50,7 +60,7 @@ describe('formatDurationShort', () => {
   })
 
   it('handles zero', () => {
-    expect(formatDurationShort(0)).toBe('0m')
+    expect(formatDurationShort(0)).toBe('0s')
   })
 })
 

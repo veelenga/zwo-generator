@@ -82,7 +82,7 @@ export function createSegment(type: WorkoutSegment['type']): WorkoutSegment {
     case 'warmup':
       return { ...baseSegment, type: 'warmup', duration: 600, powerLow: 0.4, powerHigh: 0.7 };
     case 'cooldown':
-      return { ...baseSegment, type: 'cooldown', duration: 300, powerLow: 0.6, powerHigh: 0.4 };
+      return { ...baseSegment, type: 'cooldown', duration: 300, powerLow: 0.4, powerHigh: 0.6 };
     case 'steadystate':
       return { ...baseSegment, type: 'steadystate', duration: 300, power: 0.75 };
     case 'intervals':

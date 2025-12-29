@@ -64,7 +64,7 @@ describe('getTotalDuration', () => {
     const segments: WorkoutSegment[] = [
       { id: '1', type: 'warmup', duration: 600, powerLow: 0.4, powerHigh: 0.7 },
       { id: '2', type: 'steadystate', duration: 300, power: 0.75 },
-      { id: '3', type: 'cooldown', duration: 300, powerLow: 0.6, powerHigh: 0.4 },
+      { id: '3', type: 'cooldown', duration: 300, powerLow: 0.4, powerHigh: 0.6 },
     ]
     expect(getTotalDuration(segments)).toBe(1200)
   })
@@ -201,6 +201,9 @@ describe('createSegment', () => {
     const segment = createSegment('cooldown') as CooldownSegment
     expect(segment.type).toBe('cooldown')
     expect(segment.duration).toBe(300)
+    expect(segment.powerLow).toBe(0.4)
+    expect(segment.powerHigh).toBe(0.6)
+    expect(segment.powerLow).toBeLessThan(segment.powerHigh)
   })
 
   it('creates steadystate segment with defaults', () => {

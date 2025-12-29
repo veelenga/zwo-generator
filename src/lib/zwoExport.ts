@@ -19,7 +19,9 @@ function segmentToXml(segment: WorkoutSegment, indent: string): string {
       return `${indent}<Warmup Duration="${segment.duration}" PowerLow="${formatPower(segment.powerLow)}" PowerHigh="${formatPower(segment.powerHigh)}"${segment.cadence ? ` Cadence="${segment.cadence}"` : ''}/>`;
 
     case 'cooldown':
-      return `${indent}<Cooldown Duration="${segment.duration}" PowerLow="${formatPower(segment.powerLow)}" PowerHigh="${formatPower(segment.powerHigh)}"${segment.cadence ? ` Cadence="${segment.cadence}"` : ''}/>`;
+      // ZWO format: PowerLow = start power, PowerHigh = end power
+      // For cooldown: start high, end low - so swap the values
+      return `${indent}<Cooldown Duration="${segment.duration}" PowerLow="${formatPower(segment.powerHigh)}" PowerHigh="${formatPower(segment.powerLow)}"${segment.cadence ? ` Cadence="${segment.cadence}"` : ''}/>`;
 
     case 'steadystate':
       return `${indent}<SteadyState Duration="${segment.duration}" Power="${formatPower(segment.power)}"${segment.cadence ? ` Cadence="${segment.cadence}"` : ''}/>`;

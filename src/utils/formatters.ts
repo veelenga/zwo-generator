@@ -33,13 +33,16 @@ export function formatDuration(seconds: number): string {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
-export function formatDurationShort(seconds: number): string {
-  const { hours, minutes } = parseDurationParts(seconds);
+export function formatDurationShort(totalSeconds: number): string {
+  const { hours, minutes, seconds } = parseDurationParts(totalSeconds);
 
   if (hours > 0) {
     return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
   }
-  return `${minutes}m`;
+  if (minutes > 0) {
+    return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  }
+  return `${seconds}s`;
 }
 
 export function formatPower(power: number): string {

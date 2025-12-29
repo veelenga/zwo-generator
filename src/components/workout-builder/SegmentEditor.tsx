@@ -86,7 +86,7 @@ export function SegmentEditor({ segment, onUpdate, onClose }: SegmentEditorProps
           />
         )}
 
-        {(segment.type === 'warmup' || segment.type === 'cooldown' || segment.type === 'ramp') && (
+        {(segment.type === 'warmup' || segment.type === 'ramp') && (
           <>
             <Slider
               label="Start Power"
@@ -104,6 +104,29 @@ export function SegmentEditor({ segment, onUpdate, onClose }: SegmentEditorProps
               step={POWER_STEP}
               value={segment.powerHigh}
               onChange={(e) => onUpdate({ powerHigh: Number(e.target.value) })}
+              formatValue={formatPowerValue}
+            />
+          </>
+        )}
+
+        {segment.type === 'cooldown' && (
+          <>
+            <Slider
+              label="Start Power"
+              min={MIN_POWER}
+              max={MAX_POWER}
+              step={POWER_STEP}
+              value={segment.powerHigh}
+              onChange={(e) => onUpdate({ powerHigh: Number(e.target.value) })}
+              formatValue={formatPowerValue}
+            />
+            <Slider
+              label="End Power"
+              min={MIN_POWER}
+              max={MAX_POWER}
+              step={POWER_STEP}
+              value={segment.powerLow}
+              onChange={(e) => onUpdate({ powerLow: Number(e.target.value) })}
               formatValue={formatPowerValue}
             />
           </>
