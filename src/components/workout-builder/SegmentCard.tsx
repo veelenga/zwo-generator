@@ -118,7 +118,7 @@ export function SegmentCard({
                 e.stopPropagation();
                 onDuplicate();
               }}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
               title="Duplicate"
             >
               <DuplicateIcon />
@@ -128,7 +128,7 @@ export function SegmentCard({
                 e.stopPropagation();
                 onDelete();
               }}
-              className="p-1 text-gray-400 hover:text-red-500"
+              className="p-1 text-gray-400 hover:text-red-500 cursor-pointer"
               title="Delete"
             >
               <TrashIcon />

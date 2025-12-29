@@ -41,7 +41,7 @@ export function AddSegmentButton({ onAddSegment }: AddSegmentButtonProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="
-          w-full py-3 px-4 rounded-lg border-2 border-dashed
+          w-full py-3 px-4 rounded-lg border-2 border-dashed cursor-pointer
           border-gray-300 dark:border-gray-600
           text-gray-500 dark:text-gray-400
           hover:border-blue-500 hover:text-blue-500
@@ -67,7 +67,7 @@ export function AddSegmentButton({ onAddSegment }: AddSegmentButtonProps) {
               key={option.type}
               onClick={() => handleSelect(option.type)}
               className="
-                w-full px-4 py-3 text-left
+                w-full px-4 py-3 text-left cursor-pointer
                 hover:bg-gray-50 dark:hover:bg-gray-700
                 transition-colors
               "

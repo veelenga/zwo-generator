@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
-import { SpinnerIcon } from '../ui/Icons';
+import { SpinnerIcon, ArrowRightIcon } from '../ui/Icons';
 import { sanitizePrompt, isPromptValid, MAX_PROMPT_LENGTH } from '../../lib/validation';
 
 interface PromptInputProps {
@@ -74,7 +74,7 @@ export function PromptInput({
           onClick={handleSubmit}
           disabled={!value.trim() || isLoading || isOverLimit}
           className={`
-            p-2 m-2 rounded-lg shrink-0
+            p-2 m-2 rounded-lg shrink-0 cursor-pointer
             bg-blue-600 text-white
             hover:bg-blue-700
             disabled:opacity-50 disabled:cursor-not-allowed
@@ -84,9 +84,7 @@ export function PromptInput({
           {isLoading ? (
             <SpinnerIcon className="h-5 w-5" />
           ) : (
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-            </svg>
+            <ArrowRightIcon className="h-5 w-5" />
           )}
         </button>
       </div>

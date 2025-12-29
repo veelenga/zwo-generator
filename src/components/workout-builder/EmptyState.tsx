@@ -52,7 +52,7 @@ export function EmptyState({ onGenerate, isLoading, error, onClearError }: Empty
             <button
               onClick={onClearError}
               aria-label="Close error"
-              className="text-red-400 hover:text-red-600 dark:hover:text-red-300 shrink-0"
+              className="text-red-400 hover:text-red-600 dark:hover:text-red-300 shrink-0 cursor-pointer"
             >
               <CloseIcon />
             </button>

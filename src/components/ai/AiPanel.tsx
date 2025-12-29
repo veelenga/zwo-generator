@@ -32,7 +32,7 @@ export function AiPanel() {
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               <button
                 onClick={clearError}
-                className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
+                className="text-red-400 hover:text-red-600 dark:hover:text-red-300 cursor-pointer"
               >
                 <CloseIcon />
               </button>
@@ -61,7 +61,7 @@ export function AiPanel() {
                   key={suggestion}
                   onClick={() => refine(suggestion)}
                   className="
-                    px-2 py-1 text-xs rounded-full
+                    px-2 py-1 text-xs rounded-full cursor-pointer
                     bg-gray-100 dark:bg-gray-700
                     text-gray-600 dark:text-gray-300
                     hover:bg-gray-200 dark:hover:bg-gray-600

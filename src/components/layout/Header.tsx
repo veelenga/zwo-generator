@@ -62,7 +62,7 @@ export function Header() {
                     setTempName(workout.name);
                     setIsEditingName(true);
                   }}
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white truncate max-w-[120px] sm:max-w-[200px]"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white truncate max-w-[120px] sm:max-w-[200px] cursor-pointer"
                   title="Click to rename"
                 >
                   {workout.name || 'Untitled Workout'}
@@ -78,7 +78,7 @@ export function Header() {
               <button
                 onClick={undo}
                 disabled={!canUndo}
-                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 title="Undo (Cmd+Z)"
               >
                 <UndoIcon />
@@ -86,7 +86,7 @@ export function Header() {
               <button
                 onClick={redo}
                 disabled={!canRedo}
-                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 title="Redo (Cmd+Shift+Z)"
               >
                 <RedoIcon />
