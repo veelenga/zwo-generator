@@ -180,7 +180,7 @@ export function WorkoutChart({
     <div ref={containerRef} className="relative">
       <svg
         viewBox={`0 0 ${CHART_WIDTH} ${height}`}
-        className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl"
+        className="w-full bg-gray-100 dark:bg-gray-800 rounded-t-xl"
         preserveAspectRatio="xMidYMid meet"
       >
       <g className="text-gray-300 dark:text-gray-600">
@@ -250,16 +250,6 @@ export function WorkoutChart({
           pointerEvents="none"
         />
       )}
-
-      <line
-        x1={CHART_PADDING.left}
-        y1={powerToY(0)}
-        x2={CHART_WIDTH - CHART_PADDING.right}
-        y2={powerToY(0)}
-        stroke="currentColor"
-        strokeWidth="2"
-        className="text-gray-400 dark:text-gray-500"
-      />
     </svg>
 
     {/* Tooltip */}
