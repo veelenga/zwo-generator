@@ -8,6 +8,8 @@ const MAX_HISTORY_SIZE = 50;
 interface HistoryState {
   versions: WorkoutVersion[];
   currentIndex: number;
+  lastSavedSnapshot: string;
+  isUndoRedoAction: boolean;
 
   saveVersion: (workout: Workout, source: 'manual' | 'ai', description?: string) => void;
   undo: () => Workout | null;
@@ -16,6 +18,8 @@ interface HistoryState {
   canRedo: () => boolean;
   restoreVersion: (id: string) => Workout | null;
   clearHistory: () => void;
+  setLastSavedSnapshot: (snapshot: string) => void;
+  markUndoRedoComplete: () => void;
 }
 
 export const useHistoryStore = create<HistoryState>()(
@@ -23,11 +27,24 @@ export const useHistoryStore = create<HistoryState>()(
     (set, get) => ({
       versions: [],
       currentIndex: -1,
+      lastSavedSnapshot: '',
+      isUndoRedoAction: false,
+
+      setLastSavedSnapshot: (snapshot) => {
+        set({ lastSavedSnapshot: snapshot });
+      },
+
+      markUndoRedoComplete: () => {
+        set({ isUndoRedoAction: false });
+      },
 
       saveVersion: (workout, source, description) => {
+        const workoutSnapshot = JSON.parse(JSON.stringify(workout));
+        const snapshotString = JSON.stringify(workoutSnapshot);
+
         const version: WorkoutVersion = {
           id: uuidv4(),
-          workoutSnapshot: JSON.parse(JSON.stringify(workout)),
+          workoutSnapshot,
           timestamp: new Date().toISOString(),
           source,
           description,
@@ -42,12 +59,14 @@ export const useHistoryStore = create<HistoryState>()(
             return {
               versions: newVersions,
               currentIndex: newVersions.length - 1,
+              lastSavedSnapshot: snapshotString,
             };
           }
 
           return {
             versions: newVersions,
             currentIndex: newVersions.length - 1,
+            lastSavedSnapshot: snapshotString,
           };
         });
       },
@@ -57,8 +76,10 @@ export const useHistoryStore = create<HistoryState>()(
         if (currentIndex <= 0) return null;
 
         const newIndex = currentIndex - 1;
-        set({ currentIndex: newIndex });
-        return JSON.parse(JSON.stringify(versions[newIndex].workoutSnapshot));
+        const workout = JSON.parse(JSON.stringify(versions[newIndex].workoutSnapshot));
+        const snapshotString = JSON.stringify(workout);
+        set({ currentIndex: newIndex, isUndoRedoAction: true, lastSavedSnapshot: snapshotString });
+        return workout;
       },
 
       redo: () => {
@@ -66,8 +87,10 @@ export const useHistoryStore = create<HistoryState>()(
         if (currentIndex >= versions.length - 1) return null;
 
         const newIndex = currentIndex + 1;
-        set({ currentIndex: newIndex });
-        return JSON.parse(JSON.stringify(versions[newIndex].workoutSnapshot));
+        const workout = JSON.parse(JSON.stringify(versions[newIndex].workoutSnapshot));
+        const snapshotString = JSON.stringify(workout);
+        set({ currentIndex: newIndex, isUndoRedoAction: true, lastSavedSnapshot: snapshotString });
+        return workout;
       },
 
       canUndo: () => {
@@ -90,11 +113,15 @@ export const useHistoryStore = create<HistoryState>()(
       },
 
       clearHistory: () => {
-        set({ versions: [], currentIndex: -1 });
+        set({ versions: [], currentIndex: -1, lastSavedSnapshot: '' });
       },
     }),
     {
       name: 'zwift-workout-history',
+      partialize: (state) => ({
+        versions: state.versions,
+        currentIndex: state.currentIndex,
+      }),
     }
   )
 );

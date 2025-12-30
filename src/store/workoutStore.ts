@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Workout, WorkoutSegment } from '../types/workout';
 import { createEmptyWorkout, createSegment, duplicateSegment } from '../utils/workoutUtils';
+import { useHistoryStore } from './historyStore';
 
 interface WorkoutState {
   workout: Workout;
@@ -142,6 +143,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           workout: createEmptyWorkout(),
           selectedSegmentId: null,
         });
+        useHistoryStore.getState().clearHistory();
       },
     }),
     {

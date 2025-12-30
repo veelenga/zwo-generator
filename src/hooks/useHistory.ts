@@ -9,27 +9,34 @@ interface UseHistoryReturn {
   canRedo: boolean;
   undo: () => void;
   redo: () => void;
-  saveManualChange: () => void;
 }
 
 export function useHistory(): UseHistoryReturn {
-  const { workout, setWorkout } = useWorkoutStore();
-  const { saveVersion, undo: historyUndo, redo: historyRedo, canUndo, canRedo } = useHistoryStore();
-  const lastSavedRef = useRef<string>('');
+  const { workout, setWorkout, selectedSegmentId, selectSegment } = useWorkoutStore();
+  const { saveVersion, undo: historyUndo, redo: historyRedo, markUndoRedoComplete } = useHistoryStore();
+  // Subscribe to state changes to ensure re-renders when history changes
+  const canUndo = useHistoryStore((state) => state.currentIndex > 0);
+  const canRedo = useHistoryStore((state) => state.currentIndex < state.versions.length - 1);
+  const lastSavedSnapshot = useHistoryStore((state) => state.lastSavedSnapshot);
+  const isUndoRedoAction = useHistoryStore((state) => state.isUndoRedoAction);
   const debounceTimerRef = useRef<number | null>(null);
 
-  const saveManualChange = useCallback(() => {
-    const workoutJson = JSON.stringify(workout);
-    if (workoutJson !== lastSavedRef.current) {
-      saveVersion(workout, 'manual');
-      lastSavedRef.current = workoutJson;
-    }
-  }, [workout, saveVersion]);
-
   useEffect(() => {
+    // Skip saving if this change was from undo/redo
+    if (isUndoRedoAction) {
+      markUndoRedoComplete();
+      return;
+    }
+
+    // Don't save empty workouts to history
+    if (workout.segments.length === 0) {
+      return;
+    }
+
     const workoutJson = JSON.stringify(workout);
 
-    if (workoutJson === lastSavedRef.current) {
+    // Skip if workout hasn't changed from last saved
+    if (workoutJson === lastSavedSnapshot) {
       return;
     }
 
@@ -38,7 +45,7 @@ export function useHistory(): UseHistoryReturn {
     }
 
     debounceTimerRef.current = window.setTimeout(() => {
-      saveManualChange();
+      saveVersion(workout, 'manual');
     }, DEBOUNCE_DELAY_MS);
 
     return () => {
@@ -46,29 +53,36 @@ export function useHistory(): UseHistoryReturn {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [workout, saveManualChange]);
+  }, [workout, lastSavedSnapshot, isUndoRedoAction, saveVersion, markUndoRedoComplete]);
 
   const undo = useCallback(() => {
     const previousWorkout = historyUndo();
     if (previousWorkout) {
-      lastSavedRef.current = JSON.stringify(previousWorkout);
+      const currentSelection = selectedSegmentId;
       setWorkout(previousWorkout);
+      // Preserve selection if segment still exists
+      if (currentSelection && previousWorkout.segments.some(s => s.id === currentSelection)) {
+        selectSegment(currentSelection);
+      }
     }
-  }, [historyUndo, setWorkout]);
+  }, [historyUndo, setWorkout, selectedSegmentId, selectSegment]);
 
   const redo = useCallback(() => {
     const nextWorkout = historyRedo();
     if (nextWorkout) {
-      lastSavedRef.current = JSON.stringify(nextWorkout);
+      const currentSelection = selectedSegmentId;
       setWorkout(nextWorkout);
+      // Preserve selection if segment still exists
+      if (currentSelection && nextWorkout.segments.some(s => s.id === currentSelection)) {
+        selectSegment(currentSelection);
+      }
     }
-  }, [historyRedo, setWorkout]);
+  }, [historyRedo, setWorkout, selectedSegmentId, selectSegment]);
 
   return {
-    canUndo: canUndo(),
-    canRedo: canRedo(),
+    canUndo,
+    canRedo,
     undo,
     redo,
-    saveManualChange,
   };
 }
