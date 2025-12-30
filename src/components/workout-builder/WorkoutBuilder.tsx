@@ -72,7 +72,7 @@ export function WorkoutBuilder({ onGenerate, isLoading, error, onClearError }: W
         />
 
         {/* Stats bar */}
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+        <div className="px-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-b-xl flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
           <div>
             <span className="text-gray-500 dark:text-gray-400">Duration: </span>
             <span className="font-medium text-gray-900 dark:text-gray-100">

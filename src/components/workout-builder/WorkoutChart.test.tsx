@@ -121,9 +121,9 @@ describe('WorkoutChart', () => {
         />
       );
 
-      // Should have an extra polygon with stroke for selection
-      const polygonsWithStroke = container.querySelectorAll('polygon[stroke]');
-      expect(polygonsWithStroke.length).toBe(1);
+      // Should have a polygon with the selection stroke color
+      const selectionBorder = container.querySelectorAll('polygon[stroke="#1d4ed8"]');
+      expect(selectionBorder.length).toBe(1);
     });
 
     it('does not render selection border when no segment selected', () => {
@@ -135,8 +135,8 @@ describe('WorkoutChart', () => {
         />
       );
 
-      const polygonsWithStroke = container.querySelectorAll('polygon[stroke]');
-      expect(polygonsWithStroke.length).toBe(0);
+      const selectionBorder = container.querySelectorAll('polygon[stroke="#1d4ed8"]');
+      expect(selectionBorder.length).toBe(0);
     });
   });
 

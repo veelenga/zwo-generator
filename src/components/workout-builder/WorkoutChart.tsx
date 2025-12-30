@@ -214,16 +214,19 @@ export function WorkoutChart({
       </g>
 
       <g className="text-xs fill-gray-500 dark:fill-gray-400">
-        {xAxisTicks.map((tick) => (
-          <text
-            key={tick}
-            x={CHART_PADDING.left + (tick / totalDuration) * innerWidth}
-            y={height - 10}
-            textAnchor="middle"
-          >
-            {formatDuration(tick)}
-          </text>
-        ))}
+        {xAxisTicks.map((tick, index) => {
+          const isLast = index === xAxisTicks.length - 1;
+          return (
+            <text
+              key={tick}
+              x={CHART_PADDING.left + (tick / totalDuration) * innerWidth}
+              y={height - 10}
+              textAnchor={isLast ? 'end' : 'middle'}
+            >
+              {formatDuration(tick)}
+            </text>
+          );
+        })}
       </g>
 
       {/* Render all segment fills */}
@@ -233,6 +236,9 @@ export function WorkoutChart({
           points={segment.points}
           fill={segment.color}
           fillOpacity={selectedSegmentId === segment.id ? 1 : 0.7}
+          stroke="rgba(0,0,0,0.3)"
+          strokeWidth={1}
+          strokeLinejoin="round"
           className="cursor-pointer transition-opacity duration-200 hover:opacity-100"
           onClick={() => onSegmentClick(segment.id)}
           onMouseMove={(e) => handleMouseMove(e, segment.tooltip)}

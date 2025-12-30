@@ -6,6 +6,9 @@ const createMockWorkout = (name: string, segmentCount: number): Workout => ({
   id: `workout-${name}`,
   name,
   description: '',
+  author: 'Test Author',
+  sportType: 'bike',
+  tags: [],
   segments: Array.from({ length: segmentCount }, (_, i) => ({
     id: `segment-${i}`,
     type: 'steadystate' as const,
