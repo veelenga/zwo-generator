@@ -110,10 +110,12 @@ export function Header() {
             onClick={() => setShowApiKeyModal(true)}
             title="API Key Settings"
           >
-            <SettingsIcon />
-            {!hasApiKey() && (
-              <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-1 -right-1" />
-            )}
+            <span className="relative">
+              <SettingsIcon />
+              {!hasApiKey() && (
+                <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-1 -right-1" />
+              )}
+            </span>
           </Button>
 
           <Button
