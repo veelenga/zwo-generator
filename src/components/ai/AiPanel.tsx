@@ -1,7 +1,7 @@
 import { useAI } from '../../hooks/useAI';
 import { useWorkoutStore } from '../../store/workoutStore';
 import { PromptInput } from './PromptInput';
-import { CloseIcon } from '../ui/Icons';
+import { CloseIcon, SpinnerIcon } from '../ui/Icons';
 
 export function AiPanel() {
   const { workout } = useWorkoutStore();
@@ -24,6 +24,13 @@ export function AiPanel() {
             isLoading={isLoading}
             placeholder="e.g., Make the intervals harder, add more recovery..."
           />
+        )}
+
+        {isLoading && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 animate-fade-in">
+            <SpinnerIcon className="w-4 h-4 text-blue-500" />
+            <p className="text-sm text-blue-600 dark:text-blue-400">Refining workout...</p>
+          </div>
         )}
 
         {error && (

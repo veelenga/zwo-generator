@@ -1,8 +1,11 @@
+import { useState, useCallback } from 'react';
 import { LightningIcon, CloseIcon } from '../ui/Icons';
 import { PromptInput } from '../ai/PromptInput';
+import type { Workout } from '../../types/workout';
 
 interface EmptyStateProps {
   onGenerate: (prompt: string) => void;
+  onFileImport: (workout: Workout, refinementPrompt?: string) => void;
   isLoading: boolean;
   error: string | null;
   onClearError: () => void;
@@ -17,34 +20,40 @@ const EXAMPLE_PROMPTS = [
   { label: 'Sprint Training', prompt: '30 minute sprint workout with 8x30 second max efforts' },
 ];
 
-export function EmptyState({ onGenerate, isLoading, error, onClearError }: EmptyStateProps) {
+export function EmptyState({ onGenerate, onFileImport, isLoading, error, onClearError }: EmptyStateProps) {
+  const [hasImportedFile, setHasImportedFile] = useState(false);
+
+  const handleFileStateChange = useCallback((hasFile: boolean) => {
+    setHasImportedFile(hasFile);
+  }, []);
+
   return (
     <div className="text-center py-8 sm:py-12 px-2 animate-slide-in max-w-2xl mx-auto">
-      {/* Icon */}
       <div className="mb-4 sm:mb-6">
         <LightningIcon className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-orange-500" />
       </div>
 
-      {/* Title */}
       <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
         Create Your Workout
       </h1>
 
-      {/* Description */}
       <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6 sm:mb-8 max-w-md mx-auto">
-        Describe your workout in plain English, or click one of the examples below to get started.
+        {hasImportedFile
+          ? 'Add a prompt to fine-tune the imported workout, or click Import to use as-is.'
+          : 'Describe your workout in plain English, drop a .zwo file to fine-tune, or click one of the examples below.'}
       </p>
 
-      {/* Input */}
       <div className="mb-6">
         <PromptInput
           onSubmit={onGenerate}
+          onFileImport={onFileImport}
+          onFileStateChange={handleFileStateChange}
           isLoading={isLoading}
           placeholder="e.g., 45 minute threshold workout with 3x8 minute intervals..."
+          showFileHint
         />
       </div>
 
-      {/* Error */}
       {error && (
         <div className="mb-6 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 animate-fade-in text-left">
           <div className="flex items-start justify-between gap-2">
@@ -60,25 +69,28 @@ export function EmptyState({ onGenerate, isLoading, error, onClearError }: Empty
         </div>
       )}
 
-      {/* Example buttons */}
-      <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
-        {EXAMPLE_PROMPTS.map((example) => (
-          <button
-            key={example.label}
-            onClick={() => onGenerate(example.prompt)}
-            className="
-              px-4 py-2 rounded-full text-sm cursor-pointer
-              bg-gray-100 dark:bg-gray-800
-              text-gray-700 dark:text-gray-300
-              hover:bg-blue-100 hover:text-blue-700
-              dark:hover:bg-blue-900/30 dark:hover:text-blue-300
-              transition-colors
-            "
-          >
-            {example.label}
-          </button>
-        ))}
-      </div>
+      {!hasImportedFile && (
+        <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
+          {EXAMPLE_PROMPTS.map((example) => (
+            <button
+              key={example.label}
+              onClick={() => onGenerate(example.prompt)}
+              disabled={isLoading}
+              className="
+                px-4 py-2 rounded-full text-sm cursor-pointer
+                bg-gray-100 dark:bg-gray-800
+                text-gray-700 dark:text-gray-300
+                hover:bg-blue-100 hover:text-blue-700
+                dark:hover:bg-blue-900/30 dark:hover:text-blue-300
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-colors
+              "
+            >
+              {example.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

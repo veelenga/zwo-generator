@@ -8,16 +8,17 @@ import { SegmentEditor } from './SegmentEditor';
 import { AddSegmentButton } from './AddSegmentButton';
 import { EmptyState } from './EmptyState';
 import { AiPanel } from '../ai/AiPanel';
-import type { WorkoutSegment } from '../../types/workout';
+import type { Workout, WorkoutSegment } from '../../types/workout';
 
 interface WorkoutBuilderProps {
   onGenerate: (prompt: string) => void;
+  onFileImport: (workout: Workout, refinementPrompt?: string) => void;
   isLoading: boolean;
   error: string | null;
   onClearError: () => void;
 }
 
-export function WorkoutBuilder({ onGenerate, isLoading, error, onClearError }: WorkoutBuilderProps) {
+export function WorkoutBuilder({ onGenerate, onFileImport, isLoading, error, onClearError }: WorkoutBuilderProps) {
   const {
     workout,
     selectedSegmentId,
@@ -53,6 +54,7 @@ export function WorkoutBuilder({ onGenerate, isLoading, error, onClearError }: W
     return (
       <EmptyState
         onGenerate={onGenerate}
+        onFileImport={onFileImport}
         isLoading={isLoading}
         error={error}
         onClearError={onClearError}
