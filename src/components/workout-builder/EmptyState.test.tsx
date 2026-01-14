@@ -5,6 +5,7 @@ import { EmptyState } from './EmptyState'
 
 const defaultProps = {
   onGenerate: vi.fn(),
+  onFileImport: vi.fn(),
   isLoading: false,
   error: null,
   onClearError: vi.fn(),
