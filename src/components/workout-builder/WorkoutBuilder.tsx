@@ -1,5 +1,4 @@
 import { useWorkoutStore } from '../../store/workoutStore';
-import { useHistory } from '../../hooks/useHistory';
 import { getTotalDuration, estimateTSS } from '../../utils/workoutUtils';
 import { formatDurationShort } from '../../utils/formatters';
 import { WorkoutChart } from './WorkoutChart';
@@ -29,8 +28,6 @@ export function WorkoutBuilder({ onGenerate, onFileImport, isLoading, error, onC
     moveSegment,
     selectSegment,
   } = useWorkoutStore();
-
-  useHistory();
 
   const selectedSegment = workout.segments.find((s) => s.id === selectedSegmentId);
   const totalDuration = getTotalDuration(workout.segments);

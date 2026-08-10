@@ -4,43 +4,50 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Workout, WorkoutVersion } from '../types/workout';
 
 const MAX_HISTORY_SIZE = 50;
+const AUTO_SAVE_DEBOUNCE_MS = 1000;
 
 interface HistoryState {
   versions: WorkoutVersion[];
   currentIndex: number;
-  lastSavedSnapshot: string;
-  isUndoRedoAction: boolean;
+  hasPendingSave: boolean;
 
   saveVersion: (workout: Workout, source: 'manual' | 'ai', description?: string) => void;
+  scheduleSave: (workout: Workout) => void;
+  flushPendingSave: () => void;
   undo: () => Workout | null;
   redo: () => Workout | null;
   canUndo: () => boolean;
   canRedo: () => boolean;
-  restoreVersion: (id: string) => Workout | null;
   clearHistory: () => void;
-  setLastSavedSnapshot: (snapshot: string) => void;
-  markUndoRedoComplete: () => void;
+}
+
+let pendingWorkout: Workout | null = null;
+let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearPending(): void {
+  if (pendingTimer !== null) {
+    clearTimeout(pendingTimer);
+  }
+  pendingTimer = null;
+  pendingWorkout = null;
 }
 
 export const useHistoryStore = create<HistoryState>()(
   persist(
-    (set, get) => ({
-      versions: [],
-      currentIndex: -1,
-      lastSavedSnapshot: '',
-      isUndoRedoAction: false,
+    (set, get) => {
+      const currentSnapshotString = (): string | null => {
+        const { versions, currentIndex } = get();
+        const currentVersion = versions[currentIndex];
+        return currentVersion ? JSON.stringify(currentVersion.workoutSnapshot) : null;
+      };
 
-      setLastSavedSnapshot: (snapshot) => {
-        set({ lastSavedSnapshot: snapshot });
-      },
-
-      markUndoRedoComplete: () => {
-        set({ isUndoRedoAction: false });
-      },
-
-      saveVersion: (workout, source, description) => {
-        const workoutSnapshot = JSON.parse(JSON.stringify(workout));
-        const snapshotString = JSON.stringify(workoutSnapshot);
+      const commitVersion = (
+        workout: Workout,
+        source: 'manual' | 'ai',
+        description?: string
+      ): void => {
+        const workoutSnapshot: Workout = JSON.parse(JSON.stringify(workout));
+        if (JSON.stringify(workoutSnapshot) === currentSnapshotString()) return;
 
         const version: WorkoutVersion = {
           id: uuidv4(),
@@ -51,71 +58,91 @@ export const useHistoryStore = create<HistoryState>()(
         };
 
         set((state) => {
-          const versionsUpToCurrent = state.versions.slice(0, state.currentIndex + 1);
-          const newVersions = [...versionsUpToCurrent, version];
-
+          const newVersions = [...state.versions.slice(0, state.currentIndex + 1), version];
           if (newVersions.length > MAX_HISTORY_SIZE) {
             newVersions.shift();
-            return {
-              versions: newVersions,
-              currentIndex: newVersions.length - 1,
-              lastSavedSnapshot: snapshotString,
-            };
+          }
+          return { versions: newVersions, currentIndex: newVersions.length - 1 };
+        });
+      };
+
+      const setPendingFlag = (hasPendingSave: boolean): void => {
+        if (get().hasPendingSave !== hasPendingSave) {
+          set({ hasPendingSave });
+        }
+      };
+
+      return {
+        versions: [],
+        currentIndex: -1,
+        hasPendingSave: false,
+
+        saveVersion: (workout, source, description) => {
+          get().flushPendingSave();
+          commitVersion(workout, source, description);
+        },
+
+        scheduleSave: (workout) => {
+          clearPending();
+
+          const isUnsavedChange =
+            workout.segments.length > 0 && JSON.stringify(workout) !== currentSnapshotString();
+
+          if (!isUnsavedChange) {
+            setPendingFlag(false);
+            return;
           }
 
-          return {
-            versions: newVersions,
-            currentIndex: newVersions.length - 1,
-            lastSavedSnapshot: snapshotString,
-          };
-        });
-      },
+          pendingWorkout = workout;
+          pendingTimer = setTimeout(() => get().flushPendingSave(), AUTO_SAVE_DEBOUNCE_MS);
+          setPendingFlag(true);
+        },
 
-      undo: () => {
-        const { versions, currentIndex } = get();
-        if (currentIndex <= 0) return null;
+        flushPendingSave: () => {
+          const workoutToSave = pendingWorkout;
+          clearPending();
+          setPendingFlag(false);
+          if (workoutToSave) {
+            commitVersion(workoutToSave, 'manual');
+          }
+        },
 
-        const newIndex = currentIndex - 1;
-        const workout = JSON.parse(JSON.stringify(versions[newIndex].workoutSnapshot));
-        const snapshotString = JSON.stringify(workout);
-        set({ currentIndex: newIndex, isUndoRedoAction: true, lastSavedSnapshot: snapshotString });
-        return workout;
-      },
+        undo: () => {
+          get().flushPendingSave();
+          const { versions, currentIndex } = get();
+          if (currentIndex <= 0) return null;
 
-      redo: () => {
-        const { versions, currentIndex } = get();
-        if (currentIndex >= versions.length - 1) return null;
+          const newIndex = currentIndex - 1;
+          set({ currentIndex: newIndex });
+          return JSON.parse(JSON.stringify(versions[newIndex].workoutSnapshot));
+        },
 
-        const newIndex = currentIndex + 1;
-        const workout = JSON.parse(JSON.stringify(versions[newIndex].workoutSnapshot));
-        const snapshotString = JSON.stringify(workout);
-        set({ currentIndex: newIndex, isUndoRedoAction: true, lastSavedSnapshot: snapshotString });
-        return workout;
-      },
+        redo: () => {
+          get().flushPendingSave();
+          const { versions, currentIndex } = get();
+          if (currentIndex >= versions.length - 1) return null;
 
-      canUndo: () => {
-        const { currentIndex } = get();
-        return currentIndex > 0;
-      },
+          const newIndex = currentIndex + 1;
+          set({ currentIndex: newIndex });
+          return JSON.parse(JSON.stringify(versions[newIndex].workoutSnapshot));
+        },
 
-      canRedo: () => {
-        const { versions, currentIndex } = get();
-        return currentIndex < versions.length - 1;
-      },
+        canUndo: () => {
+          const { currentIndex, hasPendingSave } = get();
+          return currentIndex > 0 || (hasPendingSave && currentIndex >= 0);
+        },
 
-      restoreVersion: (id) => {
-        const { versions } = get();
-        const index = versions.findIndex((v) => v.id === id);
-        if (index === -1) return null;
+        canRedo: () => {
+          const { versions, currentIndex, hasPendingSave } = get();
+          return !hasPendingSave && currentIndex < versions.length - 1;
+        },
 
-        set({ currentIndex: index });
-        return JSON.parse(JSON.stringify(versions[index].workoutSnapshot));
-      },
-
-      clearHistory: () => {
-        set({ versions: [], currentIndex: -1, lastSavedSnapshot: '' });
-      },
-    }),
+        clearHistory: () => {
+          clearPending();
+          set({ versions: [], currentIndex: -1, hasPendingSave: false });
+        },
+      };
+    },
     {
       name: 'zwift-workout-history',
       partialize: (state) => ({
