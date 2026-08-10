@@ -27,7 +27,23 @@ export function isPromptValid(input: string): boolean {
   return trimmed.length > 0 && trimmed.length <= MAX_PROMPT_LENGTH;
 }
 
-export { MAX_PROMPT_LENGTH };
+export { MAX_PROMPT_LENGTH, MAX_NAME_LENGTH, MAX_DESCRIPTION_LENGTH };
+
+export interface NumericBounds {
+  min: number;
+  max: number;
+  integer?: boolean;
+}
+
+export const POWER_BOUNDS: NumericBounds = { min: MIN_POWER, max: MAX_POWER };
+export const DURATION_BOUNDS: NumericBounds = { min: MIN_DURATION_SECONDS, max: MAX_DURATION_SECONDS };
+export const REPEAT_BOUNDS: NumericBounds = { min: MIN_REPEAT, max: MAX_REPEAT, integer: true };
+export const CADENCE_BOUNDS: NumericBounds = { min: MIN_CADENCE, max: MAX_CADENCE };
+
+export function clampToBounds(value: number, bounds: NumericBounds): number {
+  const clamped = Math.min(bounds.max, Math.max(bounds.min, value));
+  return bounds.integer ? Math.round(clamped) : clamped;
+}
 
 // Base segment fields (without id for AI response validation)
 const cadenceFields = {

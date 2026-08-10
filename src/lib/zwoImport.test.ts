@@ -301,6 +301,94 @@ describe('parseZwoContent', () => {
     });
   });
 
+  describe('value clamping', () => {
+    it('clamps huge repeat counts', () => {
+      const xml = createZwoXml('<IntervalsT Repeat="100000000" OnDuration="60" OffDuration="60" OnPower="1.00" OffPower="0.50"/>');
+      const result = parseZwoContent(xml);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        const segment = result.workout.segments[0];
+        if (segment.type === 'intervals') {
+          expect(segment.repeat).toBe(50);
+        }
+      }
+    });
+
+    it('rounds fractional repeat counts', () => {
+      const xml = createZwoXml('<IntervalsT Repeat="4.7" OnDuration="60" OffDuration="60" OnPower="1.00" OffPower="0.50"/>');
+      const result = parseZwoContent(xml);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        const segment = result.workout.segments[0];
+        if (segment.type === 'intervals') {
+          expect(segment.repeat).toBe(5);
+        }
+      }
+    });
+
+    it('clamps zero and negative durations to the minimum', () => {
+      const xml = createZwoXml(`
+        <SteadyState Duration="0" Power="0.75"/>
+        <SteadyState Duration="-300" Power="0.75"/>
+      `);
+      const result = parseZwoContent(xml);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        for (const segment of result.workout.segments) {
+          if (segment.type === 'steadystate') {
+            expect(segment.duration).toBe(10);
+          }
+        }
+      }
+    });
+
+    it('clamps power values to the supported range', () => {
+      const xml = createZwoXml(`
+        <SteadyState Duration="300" Power="99"/>
+        <SteadyState Duration="300" Power="-1"/>
+      `);
+      const result = parseZwoContent(xml);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        const [high, low] = result.workout.segments;
+        if (high.type === 'steadystate') expect(high.power).toBe(2.0);
+        if (low.type === 'steadystate') expect(low.power).toBe(0.2);
+      }
+    });
+
+    it('clamps out-of-range cadence but keeps missing cadence absent', () => {
+      const xml = createZwoXml(`
+        <SteadyState Duration="300" Power="0.75" Cadence="500"/>
+        <SteadyState Duration="300" Power="0.75"/>
+      `);
+      const result = parseZwoContent(xml);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.workout.segments[0].cadence).toBe(150);
+        expect(result.workout.segments[1].cadence).toBeUndefined();
+      }
+    });
+
+    it('truncates overlong name and description', () => {
+      const xml = createZwoXml('<SteadyState Duration="300" Power="0.75"/>', {
+        name: 'n'.repeat(500),
+        description: 'd'.repeat(2000),
+      });
+      const result = parseZwoContent(xml);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.workout.name.length).toBe(100);
+        expect(result.workout.description.length).toBe(500);
+      }
+    });
+  });
+
   describe('segment IDs', () => {
     it('assigns unique IDs to each segment', () => {
       const xml = createZwoXml(`

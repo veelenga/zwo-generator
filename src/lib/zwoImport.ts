@@ -1,5 +1,15 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Workout, WorkoutSegment, SportType } from '../types/workout';
+import {
+  clampToBounds,
+  POWER_BOUNDS,
+  DURATION_BOUNDS,
+  REPEAT_BOUNDS,
+  CADENCE_BOUNDS,
+  MAX_NAME_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  type NumericBounds,
+} from './validation';
 
 // Constants for file validation
 const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1MB
@@ -33,11 +43,16 @@ function getElementText(parent: Element, tagName: string): string {
   return element?.textContent?.trim() || '';
 }
 
-function getAttributeNumber(element: Element, attrName: string, defaultValue: number): number {
+function getAttributeNumber(
+  element: Element,
+  attrName: string,
+  defaultValue: number,
+  bounds: NumericBounds
+): number {
   const value = element.getAttribute(attrName);
   if (value === null) return defaultValue;
   const parsed = parseFloat(value);
-  return isNaN(parsed) ? defaultValue : parsed;
+  return isNaN(parsed) ? defaultValue : clampToBounds(parsed, bounds);
 }
 
 function getAttributeBoolean(element: Element, attrName: string): boolean {
@@ -50,9 +65,9 @@ function parseSegment(element: Element): WorkoutSegment | null {
   const baseSegment = { id: uuidv4() };
 
   // Parse optional cadence (common to all segments)
-  const cadence = getAttributeNumber(element, 'Cadence', 0);
-  const cadenceHigh = getAttributeNumber(element, 'CadenceHigh', 0);
-  const cadenceLow = getAttributeNumber(element, 'CadenceLow', 0);
+  const cadence = getAttributeNumber(element, 'Cadence', 0, CADENCE_BOUNDS);
+  const cadenceHigh = getAttributeNumber(element, 'CadenceHigh', 0, CADENCE_BOUNDS);
+  const cadenceLow = getAttributeNumber(element, 'CadenceLow', 0, CADENCE_BOUNDS);
   const cadenceFields = {
     ...(cadence > 0 && { cadence }),
     ...(cadenceHigh > 0 && { cadenceHigh }),
@@ -64,9 +79,9 @@ function parseSegment(element: Element): WorkoutSegment | null {
       return {
         ...baseSegment,
         type: 'warmup',
-        duration: getAttributeNumber(element, 'Duration', 600),
-        powerLow: getAttributeNumber(element, 'PowerLow', 0.4),
-        powerHigh: getAttributeNumber(element, 'PowerHigh', 0.7),
+        duration: getAttributeNumber(element, 'Duration', 600, DURATION_BOUNDS),
+        powerLow: getAttributeNumber(element, 'PowerLow', 0.4, POWER_BOUNDS),
+        powerHigh: getAttributeNumber(element, 'PowerHigh', 0.7, POWER_BOUNDS),
         ...cadenceFields,
       };
 
@@ -77,9 +92,9 @@ function parseSegment(element: Element): WorkoutSegment | null {
       return {
         ...baseSegment,
         type: 'cooldown',
-        duration: getAttributeNumber(element, 'Duration', 300),
-        powerLow: getAttributeNumber(element, 'PowerHigh', 0.4), // Swap back
-        powerHigh: getAttributeNumber(element, 'PowerLow', 0.6), // Swap back
+        duration: getAttributeNumber(element, 'Duration', 300, DURATION_BOUNDS),
+        powerLow: getAttributeNumber(element, 'PowerHigh', 0.4, POWER_BOUNDS), // Swap back
+        powerHigh: getAttributeNumber(element, 'PowerLow', 0.6, POWER_BOUNDS), // Swap back
         ...cadenceFields,
       };
 
@@ -87,8 +102,8 @@ function parseSegment(element: Element): WorkoutSegment | null {
       return {
         ...baseSegment,
         type: 'steadystate',
-        duration: getAttributeNumber(element, 'Duration', 300),
-        power: getAttributeNumber(element, 'Power', 0.75),
+        duration: getAttributeNumber(element, 'Duration', 300, DURATION_BOUNDS),
+        power: getAttributeNumber(element, 'Power', 0.75, POWER_BOUNDS),
         ...cadenceFields,
       };
 
@@ -96,11 +111,11 @@ function parseSegment(element: Element): WorkoutSegment | null {
       return {
         ...baseSegment,
         type: 'intervals',
-        repeat: getAttributeNumber(element, 'Repeat', 4),
-        onDuration: getAttributeNumber(element, 'OnDuration', 60),
-        offDuration: getAttributeNumber(element, 'OffDuration', 60),
-        onPower: getAttributeNumber(element, 'OnPower', 1.0),
-        offPower: getAttributeNumber(element, 'OffPower', 0.5),
+        repeat: getAttributeNumber(element, 'Repeat', 4, REPEAT_BOUNDS),
+        onDuration: getAttributeNumber(element, 'OnDuration', 60, DURATION_BOUNDS),
+        offDuration: getAttributeNumber(element, 'OffDuration', 60, DURATION_BOUNDS),
+        onPower: getAttributeNumber(element, 'OnPower', 1.0, POWER_BOUNDS),
+        offPower: getAttributeNumber(element, 'OffPower', 0.5, POWER_BOUNDS),
         ...cadenceFields,
       };
 
@@ -108,9 +123,9 @@ function parseSegment(element: Element): WorkoutSegment | null {
       return {
         ...baseSegment,
         type: 'ramp',
-        duration: getAttributeNumber(element, 'Duration', 300),
-        powerLow: getAttributeNumber(element, 'PowerLow', 0.5),
-        powerHigh: getAttributeNumber(element, 'PowerHigh', 1.0),
+        duration: getAttributeNumber(element, 'Duration', 300, DURATION_BOUNDS),
+        powerLow: getAttributeNumber(element, 'PowerLow', 0.5, POWER_BOUNDS),
+        powerHigh: getAttributeNumber(element, 'PowerHigh', 1.0, POWER_BOUNDS),
         ...cadenceFields,
       };
 
@@ -118,7 +133,7 @@ function parseSegment(element: Element): WorkoutSegment | null {
       return {
         ...baseSegment,
         type: 'freeride',
-        duration: getAttributeNumber(element, 'Duration', 600),
+        duration: getAttributeNumber(element, 'Duration', 600, DURATION_BOUNDS),
         flatRoad: getAttributeBoolean(element, 'FlatRoad'),
         ...cadenceFields,
       };
@@ -127,7 +142,7 @@ function parseSegment(element: Element): WorkoutSegment | null {
       return {
         ...baseSegment,
         type: 'maxeffort',
-        duration: getAttributeNumber(element, 'Duration', 30),
+        duration: getAttributeNumber(element, 'Duration', 30, DURATION_BOUNDS),
         ...cadenceFields,
       };
 
@@ -182,8 +197,8 @@ export function parseZwoContent(xmlContent: string): ZwoImportResponse {
     }
 
     // Parse metadata
-    const name = getElementText(workoutFile, 'name') || 'Imported Workout';
-    const description = getElementText(workoutFile, 'description');
+    const name = (getElementText(workoutFile, 'name') || 'Imported Workout').slice(0, MAX_NAME_LENGTH);
+    const description = getElementText(workoutFile, 'description').slice(0, MAX_DESCRIPTION_LENGTH);
     const author = getElementText(workoutFile, 'author');
     const sportTypeRaw = getElementText(workoutFile, 'sportType').toLowerCase();
     const sportType: SportType = sportTypeRaw === 'run' ? 'run' : 'bike';
