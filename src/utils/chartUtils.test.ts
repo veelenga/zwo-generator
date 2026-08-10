@@ -42,6 +42,16 @@ describe('createPowerToYConverter', () => {
     const expected = paddingTop + innerHeight * 0.5;
     expect(powerToY(1.0)).toBe(expected);
   });
+
+  it('clamps power above the range to the top of the chart', () => {
+    const powerToY = createPowerToYConverter(innerHeight, paddingTop);
+    expect(powerToY(POWER_DISPLAY_RANGE.max + 0.5)).toBe(paddingTop);
+  });
+
+  it('clamps power below the range to the bottom of the chart', () => {
+    const powerToY = createPowerToYConverter(innerHeight, paddingTop);
+    expect(powerToY(-1)).toBe(paddingTop + innerHeight);
+  });
 });
 
 describe('calculateXAxisTicks', () => {

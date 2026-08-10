@@ -37,7 +37,8 @@ export function createPowerToYConverter(
   maxPower: number = POWER_DISPLAY_RANGE.max
 ): (power: number) => number {
   return (power: number) => {
-    const normalized = (power - minPower) / (maxPower - minPower);
+    const clamped = Math.min(maxPower, Math.max(minPower, power));
+    const normalized = (clamped - minPower) / (maxPower - minPower);
     return paddingTop + innerHeight * (1 - normalized);
   };
 }

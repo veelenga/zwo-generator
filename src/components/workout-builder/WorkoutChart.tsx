@@ -6,7 +6,8 @@ import { formatDuration, formatPower, formatDurationShort } from '../../utils/fo
 import {
   getSegmentPath,
   calculateXAxisTicks,
-  POWER_DISPLAY_RANGE,
+  createPowerToYConverter,
+  DEFAULT_CHART_DIMENSIONS,
 } from '../../utils/chartUtils';
 import { useSettingsStore } from '../../store/settingsStore';
 
@@ -27,8 +28,8 @@ interface WorkoutChartProps {
   height?: number;
 }
 
-const CHART_PADDING = { top: 20, right: 20, bottom: 40, left: 50 };
-const CHART_WIDTH = 800;
+const CHART_PADDING = DEFAULT_CHART_DIMENSIONS.padding;
+const CHART_WIDTH = DEFAULT_CHART_DIMENSIONS.width;
 const Y_AXIS_TICKS = [0, 0.5, 0.75, 1.0, 1.25, 1.5];
 const SELECTED_SEGMENT_COLOR = '#1d4ed8';
 const FTP_LINE_POWER = 1;
@@ -79,10 +80,10 @@ export function WorkoutChart({
     [segments]
   );
 
-  const powerToY = useCallback((power: number) => {
-    const normalized = (power - POWER_DISPLAY_RANGE.min) / (POWER_DISPLAY_RANGE.max - POWER_DISPLAY_RANGE.min);
-    return CHART_PADDING.top + innerHeight * (1 - normalized);
-  }, [innerHeight]);
+  const powerToY = useMemo(
+    () => createPowerToYConverter(innerHeight, CHART_PADDING.top),
+    [innerHeight]
+  );
 
   const formatPowerWithWatts = useCallback((power: number): string => {
     const watts = Math.round(power * ftp);
