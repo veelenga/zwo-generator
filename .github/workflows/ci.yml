@@ -8,8 +8,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   lint:
@@ -80,6 +78,9 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
     concurrency:
       group: pages
       cancel-in-progress: false
