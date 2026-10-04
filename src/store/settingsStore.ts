@@ -4,10 +4,11 @@ import { settingsStorage, type PersistedSettings } from './settingsStorage';
 
 interface SettingsState {
   openaiApiKey: string;
+  rememberApiKey: boolean;
   ftp: number;
   showApiKeyModal: boolean;
 
-  setOpenaiApiKey: (key: string) => void;
+  setOpenaiApiKey: (key: string, remember: boolean) => void;
   setFtp: (ftp: number) => void;
   setShowApiKeyModal: (show: boolean) => void;
   hasApiKey: () => boolean;
@@ -20,11 +21,12 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       openaiApiKey: '',
+      rememberApiKey: false,
       ftp: DEFAULT_FTP,
       showApiKeyModal: false,
 
-      setOpenaiApiKey: (key) => {
-        set({ openaiApiKey: key, showApiKeyModal: false });
+      setOpenaiApiKey: (key, remember) => {
+        set({ openaiApiKey: key, rememberApiKey: remember && key.length > 0, showApiKeyModal: false });
       },
 
       setFtp: (ftp) => {
@@ -46,6 +48,7 @@ export const useSettingsStore = create<SettingsState>()(
       migrate: (persisted) => persisted as PersistedSettings,
       partialize: (state): PersistedSettings => ({
         openaiApiKey: state.openaiApiKey,
+        rememberApiKey: state.rememberApiKey,
         ftp: state.ftp,
       }),
     }

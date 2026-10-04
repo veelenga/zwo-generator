@@ -9,11 +9,11 @@ const durableSettings = () => localStorage.getItem(STORAGE_NAME) ?? ''
 
 describe('settingsStore', () => {
   beforeEach(() => {
-    useSettingsStore.setState({ openaiApiKey: '', ftp: 200 })
+    useSettingsStore.setState({ openaiApiKey: '', rememberApiKey: false, ftp: 200 })
   })
 
   it('keeps the key in session storage and out of local storage', () => {
-    useSettingsStore.getState().setOpenaiApiKey(API_KEY)
+    useSettingsStore.getState().setOpenaiApiKey(API_KEY, false)
 
     expect(useSettingsStore.getState().hasApiKey()).toBe(true)
     expect(sessionStorage.getItem(SESSION_KEY_NAME)).toBe(API_KEY)
@@ -35,7 +35,7 @@ describe('settingsStore', () => {
   })
 
   it('has no key in a new session', async () => {
-    useSettingsStore.getState().setOpenaiApiKey(API_KEY)
+    useSettingsStore.getState().setOpenaiApiKey(API_KEY, false)
     sessionStorage.clear()
     useSettingsStore.setState(useSettingsStore.getInitialState(), true)
 
@@ -44,10 +44,50 @@ describe('settingsStore', () => {
     expect(useSettingsStore.getState().hasApiKey()).toBe(false)
   })
 
-  it('removes the key from session storage when cleared', () => {
-    useSettingsStore.getState().setOpenaiApiKey(API_KEY)
+  describe('remembered key', () => {
+    it('saves the key in local storage and not in session storage', () => {
+      useSettingsStore.getState().setOpenaiApiKey(API_KEY, true)
 
-    useSettingsStore.getState().setOpenaiApiKey('')
+      expect(JSON.parse(durableSettings()).state.openaiApiKey).toBe(API_KEY)
+      expect(sessionStorage.getItem(SESSION_KEY_NAME)).toBeNull()
+    })
+
+    it('is still there in a new session', async () => {
+      useSettingsStore.getState().setOpenaiApiKey(API_KEY, true)
+      const saved = durableSettings()
+      sessionStorage.clear()
+      useSettingsStore.setState(useSettingsStore.getInitialState(), true)
+      localStorage.setItem(STORAGE_NAME, saved)
+
+      await useSettingsStore.persist.rehydrate()
+
+      expect(useSettingsStore.getState().openaiApiKey).toBe(API_KEY)
+      expect(useSettingsStore.getState().rememberApiKey).toBe(true)
+    })
+
+    it('leaves local storage when remember is turned off', () => {
+      useSettingsStore.getState().setOpenaiApiKey(API_KEY, true)
+
+      useSettingsStore.getState().setOpenaiApiKey(API_KEY, false)
+
+      expect(durableSettings()).not.toContain(API_KEY)
+      expect(sessionStorage.getItem(SESSION_KEY_NAME)).toBe(API_KEY)
+    })
+
+    it('leaves local storage when forgotten', () => {
+      useSettingsStore.getState().setOpenaiApiKey(API_KEY, true)
+
+      useSettingsStore.getState().setOpenaiApiKey('', false)
+
+      expect(durableSettings()).not.toContain(API_KEY)
+      expect(useSettingsStore.getState().rememberApiKey).toBe(false)
+    })
+  })
+
+  it('removes the key from session storage when cleared', () => {
+    useSettingsStore.getState().setOpenaiApiKey(API_KEY, false)
+
+    useSettingsStore.getState().setOpenaiApiKey('', false)
 
     expect(useSettingsStore.getState().hasApiKey()).toBe(false)
     expect(sessionStorage.getItem(SESSION_KEY_NAME)).toBeNull()
@@ -64,6 +104,7 @@ describe('settingsStore', () => {
 
     expect(useSettingsStore.getState().openaiApiKey).toBe(API_KEY)
     expect(useSettingsStore.getState().ftp).toBe(250)
+    expect(useSettingsStore.getState().rememberApiKey).toBe(false)
     expect(sessionStorage.getItem(SESSION_KEY_NAME)).toBe(API_KEY)
     expect(durableSettings()).not.toContain(API_KEY)
   })

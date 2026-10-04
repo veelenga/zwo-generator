@@ -9,14 +9,16 @@ const MAX_FTP = 500;
 
 interface SettingsFormProps {
   initialApiKey: string;
+  initialRemember: boolean;
   initialFtp: number;
-  onSave: (apiKey: string, ftp: number) => void;
+  onSave: (apiKey: string, remember: boolean, ftp: number) => void;
   onForgetApiKey: () => void;
   onCancel: () => void;
 }
 
-function SettingsForm({ initialApiKey, initialFtp, onSave, onForgetApiKey, onCancel }: SettingsFormProps) {
+function SettingsForm({ initialApiKey, initialRemember, initialFtp, onSave, onForgetApiKey, onCancel }: SettingsFormProps) {
   const [key, setKey] = useState(initialApiKey);
+  const [remember, setRemember] = useState(initialRemember);
   const [ftpValue, setFtpValue] = useState(String(initialFtp));
   const [error, setError] = useState('');
 
@@ -33,7 +35,7 @@ function SettingsForm({ initialApiKey, initialFtp, onSave, onForgetApiKey, onCan
       return;
     }
 
-    onSave(trimmedKey, ftpNum);
+    onSave(trimmedKey, remember, ftpNum);
   };
 
   return (
@@ -73,6 +75,14 @@ function SettingsForm({ initialApiKey, initialFtp, onSave, onForgetApiKey, onCan
           }}
           placeholder="sk-..."
         />
+        <label className="mt-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+          />
+          Remember on this device
+        </label>
         {initialApiKey && (
           <Button
             className="mt-2"
@@ -96,8 +106,9 @@ function SettingsForm({ initialApiKey, initialFtp, onSave, onForgetApiKey, onCan
         </p>
         <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
           <p className="text-xs text-amber-800 dark:text-amber-200">
-            <strong>Security note:</strong> Your API key is kept for this browser tab only and is gone when you
-            close it. We recommend{' '}
+            <strong>Security note:</strong> By default your API key is kept for this browser tab only and is
+            gone when you close it. "Remember on this device" saves it unencrypted in this browser, so avoid it
+            on shared computers. We recommend{' '}
             <a
               href="https://platform.openai.com/settings/organization/limits"
               target="_blank"
@@ -128,10 +139,10 @@ function SettingsForm({ initialApiKey, initialFtp, onSave, onForgetApiKey, onCan
 }
 
 export function ApiKeyModal() {
-  const { openaiApiKey, ftp, showApiKeyModal, setOpenaiApiKey, setFtp, setShowApiKeyModal } = useSettingsStore();
+  const { openaiApiKey, rememberApiKey, ftp, showApiKeyModal, setOpenaiApiKey, setFtp, setShowApiKeyModal } = useSettingsStore();
 
-  const handleSave = (apiKey: string, ftpValue: number) => {
-    setOpenaiApiKey(apiKey);
+  const handleSave = (apiKey: string, remember: boolean, ftpValue: number) => {
+    setOpenaiApiKey(apiKey, remember);
     setFtp(ftpValue);
     setShowApiKeyModal(false);
   };
@@ -150,9 +161,10 @@ export function ApiKeyModal() {
       {showApiKeyModal && (
         <SettingsForm
           initialApiKey={openaiApiKey}
+          initialRemember={rememberApiKey}
           initialFtp={ftp}
           onSave={handleSave}
-          onForgetApiKey={() => setOpenaiApiKey('')}
+          onForgetApiKey={() => setOpenaiApiKey('', false)}
           onCancel={handleClose}
         />
       )}

@@ -2,6 +2,7 @@ import type { PersistStorage, StorageValue } from 'zustand/middleware';
 
 export interface PersistedSettings {
   openaiApiKey: string;
+  rememberApiKey: boolean;
   ftp: number;
 }
 
@@ -22,10 +23,12 @@ export const settingsStorage: PersistStorage<PersistedSettings> = {
   },
 
   setItem: (name, value) => {
-    const { openaiApiKey, ...durableState } = value.state;
+    const { openaiApiKey, ...settingsWithoutKey } = value.state;
+    const { rememberApiKey } = value.state;
+    const durableState = rememberApiKey ? value.state : settingsWithoutKey;
     localStorage.setItem(name, JSON.stringify({ ...value, state: durableState }));
 
-    if (openaiApiKey) {
+    if (openaiApiKey && !rememberApiKey) {
       sessionStorage.setItem(sessionKeyName(name), openaiApiKey);
     } else {
       sessionStorage.removeItem(sessionKeyName(name));

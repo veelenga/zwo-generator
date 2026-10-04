@@ -10,7 +10,7 @@ const settings = () => useSettingsStore.getState()
 
 describe('ApiKeyModal', () => {
   beforeEach(() => {
-    useSettingsStore.setState({ openaiApiKey: '', ftp: 200, showApiKeyModal: true })
+    useSettingsStore.setState({ openaiApiKey: '', rememberApiKey: false, ftp: 200, showApiKeyModal: true })
   })
 
   it('saves the key and FTP and closes', async () => {
@@ -23,8 +23,33 @@ describe('ApiKeyModal', () => {
     await user.click(screen.getByRole('button', { name: /save/i }))
 
     expect(settings().openaiApiKey).toBe(API_KEY)
+    expect(settings().rememberApiKey).toBe(false)
     expect(settings().ftp).toBe(250)
     expect(settings().showApiKeyModal).toBe(false)
+  })
+
+  it('remembers the key when asked to', async () => {
+    const user = userEvent.setup()
+    render(<ApiKeyModal />)
+
+    await user.type(screen.getByLabelText('API Key'), API_KEY)
+    await user.click(screen.getByLabelText('Remember on this device'))
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    expect(settings().openaiApiKey).toBe(API_KEY)
+    expect(settings().rememberApiKey).toBe(true)
+  })
+
+  it('stops remembering the key when unticked', async () => {
+    useSettingsStore.setState({ openaiApiKey: API_KEY, rememberApiKey: true })
+    const user = userEvent.setup()
+    render(<ApiKeyModal />)
+
+    await user.click(screen.getByLabelText('Remember on this device'))
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    expect(settings().openaiApiKey).toBe(API_KEY)
+    expect(settings().rememberApiKey).toBe(false)
   })
 
   it('rejects a key with the wrong format', async () => {
