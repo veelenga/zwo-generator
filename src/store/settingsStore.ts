@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { settingsStorage, type PersistedSettings } from './settingsStorage';
 
 interface SettingsState {
   openaiApiKey: string;
@@ -13,6 +14,7 @@ interface SettingsState {
 }
 
 const DEFAULT_FTP = 200;
+const STORAGE_VERSION = 1;
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
@@ -39,7 +41,10 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'zwift-workout-settings',
-      partialize: (state) => ({
+      version: STORAGE_VERSION,
+      storage: settingsStorage,
+      migrate: (persisted) => persisted as PersistedSettings,
+      partialize: (state): PersistedSettings => ({
         openaiApiKey: state.openaiApiKey,
         ftp: state.ftp,
       }),
