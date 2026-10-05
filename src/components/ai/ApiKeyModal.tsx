@@ -106,9 +106,9 @@ function SettingsForm({ initialApiKey, initialRemember, initialFtp, onSave, onFo
         </p>
         <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
           <p className="text-xs text-amber-800 dark:text-amber-200">
-            <strong>Security note:</strong> By default your API key is kept for this browser tab only and is
-            gone when you close it. "Remember on this device" saves it unencrypted in this browser, so avoid it
-            on shared computers. We recommend{' '}
+            <strong>Security note:</strong> By default your API key is kept only for this browser tab.
+            "Remember on this device" saves it unencrypted in this browser, where other people using this
+            computer and other pages on this site's address can read it. We recommend{' '}
             <a
               href="https://platform.openai.com/settings/organization/limits"
               target="_blank"
