@@ -120,15 +120,16 @@ export function WorkoutChart({
   const chartSegments = useMemo<ChartSegment[]>(() => {
     if (totalDuration === 0) return [];
 
+    const result: ChartSegment[] = [];
     let currentX = CHART_PADDING.left;
-    return segments.map((segment) => {
+    for (const segment of segments) {
       const duration = getSegmentDuration(segment);
       const width = (duration / totalDuration) * innerWidth;
       const { points, avgPower } = getSegmentPath(segment, currentX, width, powerToY);
       const color = getColorForPower(avgPower);
       const tooltip = getSegmentTooltip(segment, duration, avgPower);
 
-      const result = {
+      result.push({
         id: segment.id,
         x: currentX,
         width,
@@ -136,11 +137,11 @@ export function WorkoutChart({
         color,
         avgPower,
         tooltip,
-      };
+      });
 
       currentX += width;
-      return result;
-    });
+    }
+    return result;
   }, [segments, totalDuration, innerWidth, powerToY, getSegmentTooltip]);
 
   const xAxisTicks = useMemo(
